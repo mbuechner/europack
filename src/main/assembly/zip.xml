@@ -21,12 +21,27 @@
             </includes>
         </fileSet>
         <fileSet>
+            <directory>${project.build.scriptSourceDirectory}</directory>
+            <outputDirectory>jre</outputDirectory>
+            <includes>
+                <include>README.md</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.scriptSourceDirectory}</directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>europack.sh</include>
+            </includes>
+        </fileSet>
+        <fileSet>
             <directory>${project.build.directory}</directory>
             <outputDirectory></outputDirectory>
             <includes>
                 <include>*.jar</include>
-				<include>*.exe</include>
+                <include>*.exe</include>
             </includes>
         </fileSet>
     </fileSets>
 </assembly>
+

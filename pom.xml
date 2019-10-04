@@ -35,8 +35,8 @@
     </scm>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
     </properties>
     <repositories>
         <repository>
@@ -109,7 +109,7 @@
                             <addClasspath>true</addClasspath>
                             <mainClass>de.ddb.labs.europack.Main</mainClass>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <classpathLayoutType>repository</classpathLayoutType>
+                            <!--<classpathLayoutType>repository</classpathLayoutType>-->
                         </manifest>
                     </archive>
                 </configuration>
@@ -183,10 +183,13 @@
                             </classPath>
                             <icon>src/main/resources/icon.ico</icon>
                             <jre>
-                                <minVersion>1.8.0</minVersion>
+                                <minVersion>11</minVersion>
                                 <!--<maxVersion>1.8.0</maxVersion>-->
                                 <initialHeapSize>2048</initialHeapSize>
                                 <maxHeapSize>4096</maxHeapSize>
+                                <path>jre</path>
+                                <bundledJre64Bit>true</bundledJre64Bit>
+                                <bundledJreAsFallback>true</bundledJreAsFallback>
                             </jre>
                             <versionInfo>
                                 <fileVersion>1.0.0.0</fileVersion>
@@ -204,7 +207,7 @@
                             <messages>
                                 <startupErr>Error while starting ${project.name}.</startupErr>
                                 <bundledJreErr>Bundle error startung ${project.name}.</bundledJreErr>
-                                <jreVersionErr>${project.name} does require Java 8 or higher.</jreVersionErr>
+                                <jreVersionErr>${project.name} does require Java 11 or higher. Either install it on your system or put it into the subfolder jre/. Thanks!</jreVersionErr>
                                 <launcherErr>Error running ${project.name}.</launcherErr>
                                 Used by console header only. 
                                 <instanceAlreadyExistsMsg>${project.name} is already running.</instanceAlreadyExistsMsg>
