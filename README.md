@@ -59,4 +59,4 @@ See https://github.com/mbuechner/europack/releases/
 
 *Supported Operating Systems:* Windows, Linux and MacOS
 
-*Requirement:* Java(TM) SE Runtime Environment (build 1.8.0 or newer)
+*Requirement:* Java(TM) SE Runtime Environment (11 or newer) _or_ OpenJDK (11 or newer)
