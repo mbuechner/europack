@@ -57,5 +57,6 @@ See https://github.com/mbuechner/europack/releases/
 3. Run in the folder with `pom.xml` the following command: `mvn clean package`
 4. The archive `target\europack.zip` does contain everything you'll need to run the application.
 
-Supportet Operating Systems: Windows, Linux and MacOS
-Requirement: Java(TM) SE Runtime Environment (build 1.8.0 or newer)
+*Supported Operating Systems:* Windows, Linux and MacOS
+
+*Requirement:* Java(TM) SE Runtime Environment (build 1.8.0 or newer)
