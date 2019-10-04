@@ -125,7 +125,7 @@ public class DDBIdGetter {
             LOG.info("{} items added, it's {} all in all now.", list.size(), count);
 
             for (String ddbId : list) {
-                if (!isCanceled()) {
+                if (isCanceled()) {
                     break;
                 }
                 final Request request = new Request.Builder()

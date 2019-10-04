@@ -78,7 +78,7 @@ limitations under the License.
     </appender>
     
     <logger name="de.ddb.labs.europack" additivity="false">
-        <appender-ref ref="STDOUT" />
+        <!--<appender-ref ref="STDOUT" />-->
         <appender-ref ref="LogStreamAppender" />
         <appender-ref ref="FILEINFO" />
         <appender-ref ref="FILEERROR"/>

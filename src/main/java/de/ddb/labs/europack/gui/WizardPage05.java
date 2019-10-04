@@ -157,15 +157,8 @@ public class WizardPage05 extends WizardPageEuropack {
             ddbidgetter.setDownloader(edmdown); // yes, important!
 
             this.progressBarTimer = new Timer(500, (ActionEvent e) -> {
-                try {
-                    final int noOfObjects = ddbidgetter.getNumberOfResults();
-                    final int noOfProcessed = edmdown.getItemsDowloaded();
-                    final int v = Math.min((int) Math.ceil(100f / noOfObjects * noOfProcessed), 100);
-                    jProgressBar1.setValue(v);
-                    updateIcons();
-                } catch (IOException ex) {
-                    LOG.error("{}", ex.getMessage());
-                }
+                updateProgressbar();
+                updateIcons();
             });
             // start
             progressBarTimer.start(); //timer
@@ -176,7 +169,9 @@ public class WizardPage05 extends WizardPageEuropack {
                     ddbidgetter.run();
                     // wait until everyone's finished
                     while (!ddbidgetter.isDone() || !edmdown.isDone() || !epfp.isDone()) {
-                        if(ddbidgetter.isCanceled() || edmdown.isCanceled() || epfp.isCanceled()) break;
+                        if (ddbidgetter.isCanceled() || edmdown.isCanceled() || epfp.isCanceled()) {
+                            break;
+                        }
                     }
 
                     List<String> errors = CacheManager.getInstance().getErrorIds(cacheId);
@@ -190,18 +185,21 @@ public class WizardPage05 extends WizardPageEuropack {
                             ddbidgetter.addAdditionalJobs(errors, true);
                             // wait again
                             while (!ddbidgetter.isDone() || !edmdown.isDone() || !epfp.isDone()) {
-                                if(ddbidgetter.isCanceled() || edmdown.isCanceled() || epfp.isCanceled()) break;
+                                if (ddbidgetter.isCanceled() || edmdown.isCanceled() || epfp.isCanceled()) {
+                                    break;
+                                }
                             }
                         } else {
                             break; //while (!errors.isEmpty())
                         }
                         errors = CacheManager.getInstance().getErrorIds(cacheId);
                     }
-                    progressBarTimer.stop();
+                    this.progressBarTimer.stop();
+                    updateProgressbar();
+                    updateIcons(); // a last time
                     setFinishEnabled(true);
                     setCancelEnabled(false);
                     setNextEnabled(true);
-                    updateIcons(); // a last time
                     ddbidgetter.dispose();
                     edmdown.dispose();
                     epfp.dispose();
@@ -216,6 +214,17 @@ public class WizardPage05 extends WizardPageEuropack {
         } catch (NullPointerException | InterruptedException | IOException ex) {
             LOG.error("{}", ex.getMessage(), ex);
             JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void updateProgressbar() {
+        try {
+            final int noOfObjects = ddbidgetter.getNumberOfResults();
+            final int noOfProcessed = edmdown.getItemsDowloaded();
+            final int v = Math.min((int) Math.ceil(100f / noOfObjects * noOfProcessed), 100);
+            jProgressBar1.setValue(v);
+        } catch (IOException ex) {
+            LOG.error("{}", ex.getMessage());
         }
     }
 

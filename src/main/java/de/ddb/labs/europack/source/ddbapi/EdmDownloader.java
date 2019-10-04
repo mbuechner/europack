@@ -85,7 +85,7 @@ public class EdmDownloader {
     }
 
     public synchronized void addDownloadJob(String ddbId, Request request, boolean removeFromErrors) {
-        if (!canceled) {
+        if (canceled) {
             return;
         }
         client.newCall(request).enqueue(new MyCallback(ddbId));

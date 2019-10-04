@@ -65,7 +65,7 @@ public class EuropackFilterProcessor {
     }
 
     public synchronized void addJob(String id) {
-        if (!canceled) {
+        if (canceled) {
             return;
         }
         queueIds.add(id);
@@ -121,7 +121,7 @@ public class EuropackFilterProcessor {
 //            }
             //final EuropackDoc ed = (EuropackDoc) element.getObjectValue();
             for (FilterInterface f : filterInstance) {
-                if (!isCanceled()) {
+                if (isCanceled()) {
                     return;
                 }
                 try {
@@ -137,7 +137,7 @@ public class EuropackFilterProcessor {
             }
             if (ed.getStatus() == EuropackDoc.Status.VALID) {
                 for (SinkInterface sink : sinks) {
-                    if (!isCanceled()) {
+                    if (isCanceled()) {
                         return;
                     }
                     try {
