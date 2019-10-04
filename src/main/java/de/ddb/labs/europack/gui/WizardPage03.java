@@ -1,0 +1,199 @@
+/*
+ * Copyright 2019 Michael Büchner <m.buechner@dnb.de>.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package de.ddb.labs.europack.gui;
+
+import com.github.cjwizard.WizardPage;
+import com.github.cjwizard.WizardSettings;
+import de.ddb.labs.europack.filter.FilterInterface;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import javax.swing.table.DefaultTableModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ *
+ * @author Michael Büchner <m.buechner@dnb.de>
+ */
+public class WizardPage03 extends WizardPageEuropack {
+
+    private static final long serialVersionUID = -2630944559204787335L;
+    private static final Logger LOG = LoggerFactory.getLogger(WizardPage03.class);
+
+    /**
+     * Creates new form WizardLoad
+     *
+     * @param title
+     * @param description
+     */
+    public WizardPage03(String title, String description) {
+        super(title, description);
+        initComponents();
+
+        final DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        final Properties properties = new Properties();
+
+        try (final BufferedReader is = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream(".properties"), Charset.forName("UTF-8")));) {
+            properties.load(is);
+            final String[] fs = properties.getProperty("europack.filters", "").split("\\|");
+            for (int i = 0; i < fs.length; ++i) {
+                final String f = fs[i];
+                if (f != null && !f.isEmpty()) {
+
+                    try {
+                        final Class<?> act = Class.forName("de.ddb.labs.europack.filter." + f);
+                        final Constructor<?> constr = act.getConstructor();
+                        final FilterInterface fi = (FilterInterface) constr.newInstance();
+
+                        model.addRow(new Object[]{i + 1, true, fi.getName(), fi.getDescription()});
+                    } catch (InstantiationException | ClassNotFoundException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException | InvocationTargetException e) {
+                        LOG.warn("Could not init filter {}. {}", "de.ddb.labs.europack.filter." + f, e.getMessage());
+                    }
+                }
+            }
+            jTable1.getColumnModel().getColumn(0).setPreferredWidth(30);
+            jTable1.getColumnModel().getColumn(1).setPreferredWidth(40);
+            jTable1.getColumnModel().getColumn(2).setPreferredWidth(200);
+            jTable1.getColumnModel().getColumn(3).setPreferredWidth(1500);
+
+        } catch (IOException | IllegalArgumentException | SecurityException ex) {
+            LOG.warn("Could not get properties in file .properties. {}", ex.getMessage());
+        }
+    }
+
+    /**
+     *
+     * @param path
+     * @param settings
+     */
+    @Override
+    public void rendering(List<WizardPage> path, WizardSettings settings) {
+        super.rendering(path, settings);
+        setPrevEnabled(true);
+        setNextEnabled(true);
+        setFinishEnabled(false);
+        setCancelEnabled(false);
+    }
+
+    /**
+     *
+     * @param settings
+     * @return
+     */
+    @Override
+    public boolean onNext(WizardSettings settings) {
+        final DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        if (model == null) {
+            LOG.warn("Could not get data model from table.");
+            return false;
+        }
+
+        final List<String> fc = new ArrayList<>();
+        for (int r = 0; r < model.getRowCount(); ++r) {
+            try {
+                if ((boolean) model.getValueAt(r, 1)) {
+                    fc.add((String) model.getValueAt(r, 2));
+                }
+            } catch (Exception ex) {
+                LOG.warn("Could not instantiate filter. {}", ex.getMessage());
+            }
+        }
+
+        settings.put("filters", fc);
+        LOG.info("Active filters: {}", fc);
+        return true;
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jLabel1 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+
+        jLabel1.setText("Please Select Filters");
+
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "No.", "Apply", "Filter Name", "Filter Description"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Integer.class, java.lang.Boolean.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, true, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jTable1.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        jTable1.setMaximumSize(new java.awt.Dimension(60, 0));
+        jTable1.setMinimumSize(new java.awt.Dimension(10, 0));
+        jTable1.getTableHeader().setReorderingAllowed(false);
+        jScrollPane1.setViewportView(jTable1);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 143, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable jTable1;
+    // End of variables declaration//GEN-END:variables
+}
