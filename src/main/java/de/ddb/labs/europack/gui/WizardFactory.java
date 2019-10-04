@@ -92,13 +92,7 @@ public class WizardFactory implements PageFactory {
 
         final WizardPage lastPage = path.get(path.size() - 1);
         if (lastPage instanceof WizardPage05) {
-            final int confirm = JOptionPane.showOptionDialog(null,
-                    "Do you want to start over?",
-                    "Do-It-Again Confirmation", JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE, null, null, null);
-            if (confirm == JOptionPane.YES_OPTION) {
-                return PAGES.get(0);
-            }
+            return PAGES.get(0);
         }
 
         for (int i = 0; i < PAGES.size(); i++) {
@@ -123,4 +117,3 @@ public class WizardFactory implements PageFactory {
     }
 
 }
-

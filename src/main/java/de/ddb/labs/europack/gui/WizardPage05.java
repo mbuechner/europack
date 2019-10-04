@@ -136,9 +136,9 @@ public class WizardPage05 extends WizardPageEuropack {
             super.rendering(path, settings);
             jTextPane1.setText(""); //clear output
             setPrevEnabled(false);
-            setNextEnabled(false);
             setFinishEnabled(false);
             setCancelEnabled(true);
+            setNextEnabled(false);
 
             // Logging stuff
             final OutputStream os = new TextAreaOutputStream(jTextPane1, jCheckBoxMenuItem1);
@@ -199,7 +199,7 @@ public class WizardPage05 extends WizardPageEuropack {
                     updateIcons(); // a last time
                     setFinishEnabled(true);
                     setCancelEnabled(false);
-                    setNextEnabled(true);
+                    setPrevEnabled(true);
                     ddbidgetter.dispose();
                     edmdown.dispose();
                     epfp.dispose();

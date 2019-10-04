@@ -110,6 +110,9 @@ public class EuropackFilterProcessor {
 
         @Override
         public void run() {
+            if (isCanceled()) {
+                return;
+            }
             final EuropackDoc ed = CacheManager.getInstance().get(cacheId, id);
 
             // debugging (1%)
@@ -119,7 +122,6 @@ public class EuropackFilterProcessor {
 //                incErrors();
 //                LOG.error("{}: Statistical sort out for debugging", id);
 //            }
-            //final EuropackDoc ed = (EuropackDoc) element.getObjectValue();
             for (FilterInterface f : filterInstance) {
                 if (isCanceled()) {
                     return;
@@ -212,4 +214,3 @@ public class EuropackFilterProcessor {
         }
     }
 }
-
