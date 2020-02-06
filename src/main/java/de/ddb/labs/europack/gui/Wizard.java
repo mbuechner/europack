@@ -76,11 +76,10 @@ public class Wizard extends JFrame {
             CacheManager.getInstance().destroy();
         }
     }
-    
+
     public void cancel() {
         factory.cancel();
     }
-    
 
     private void initComponents() {
 
@@ -173,5 +172,3 @@ public class Wizard extends JFrame {
         return cicon03;
     }
 }
-
-
