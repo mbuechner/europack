@@ -49,7 +49,7 @@ import org.xml.sax.SAXException;
  * Elemental example for executing multiple GET requests sequentially.
  */
 public class EdmDownloader {
-
+    
     private final static Logger LOG = LoggerFactory.getLogger(EdmDownloader.class);
     private final static int MAX_REQUESTS = 100;
     private final static int MAX_REQUESTS_PER_HOST = 4;
@@ -62,12 +62,12 @@ public class EdmDownloader {
     private int itemsToDownload, itemsDowloaded;
     private boolean done, canceled;
     private int errors;
-
+    
     public EdmDownloader(String cacheId, EuropackFilterProcessor epfp) throws InterruptedException, IOException {
         final Dispatcher dispatcher = new Dispatcher();
         dispatcher.setMaxRequests(MAX_REQUESTS);
         dispatcher.setMaxRequestsPerHost(MAX_REQUESTS_PER_HOST);
-
+        
         client = new OkHttpClient.Builder()
                 .connectTimeout(CONNECTTIMEOUT, TimeUnit.SECONDS)
                 .writeTimeout(WRITETIMEOUT, TimeUnit.SECONDS)
@@ -83,12 +83,16 @@ public class EdmDownloader {
         this.errors = 0;
         LOG.info("Download ID is {}. Cache opened..", cacheId);
     }
-
+    
     public synchronized void addDownloadJob(String ddbId, Request request, boolean removeFromErrors) {
-        if (!canceled) {
+        if (canceled) {
             return;
         }
-        client.newCall(request).enqueue(new MyCallback(ddbId));
+        try {
+            client.newCall(request).enqueue(new MyCallback(ddbId));
+        } catch (Exception e) {
+            LOG.error("{}", e.getMessage(), e);
+        }
         this.done = false;
         if (removeFromErrors) {
             --errors;
@@ -103,7 +107,7 @@ public class EdmDownloader {
             }
         }
     }
-
+    
     public void reset() {
         this.itemsDowloaded = 0;
         this.itemsToDownload = Integer.MAX_VALUE;
@@ -111,7 +115,7 @@ public class EdmDownloader {
         this.canceled = false;
         this.errors = 0;
     }
-
+    
     public void dispose() {
         client.dispatcher().cancelAll();
         client.dispatcher().executorService().shutdownNow();
@@ -124,15 +128,15 @@ public class EdmDownloader {
             // nothing
         }
     }
-
+    
     class MyCallback implements Callback {
-
+        
         private final String id;
-
+        
         public MyCallback(String id) {
             this.id = id;
         }
-
+        
         @Override
         public void onFailure(Call call, IOException e) {
             if (isCanceled()) {
@@ -143,7 +147,7 @@ public class EdmDownloader {
             incErrors();
             finishing();
         }
-
+        
         @Override
         public void onResponse(Call call, Response response) throws IOException {
             if (isCanceled()) {
@@ -161,7 +165,7 @@ public class EdmDownloader {
                 final EuropackDoc ed = new EuropackDoc(id, responseBody.byteStream());
                 CacheManager.getInstance().put(cacheId, ed);
                 epfp.addJob(id);
-
+                
             } catch (ConnectException | IllegalArgumentException | SAXException | ParserConfigurationException | NullPointerException ex) {
                 LOG.error("{}: {}", id, ex.getMessage());
                 CacheManager.getInstance().addError(cacheId, new EuropackDoc(id));
@@ -170,7 +174,7 @@ public class EdmDownloader {
                 finishing();
             }
         }
-
+        
         private void finishing() {
             final int getItemsDowloaded = incItemsDowloaded();
             final int getItemsToDownload = getItemsToDownload();
@@ -181,7 +185,7 @@ public class EdmDownloader {
                 setDone(true);
             }
         }
-
+        
     }
 
     /**
@@ -217,7 +221,7 @@ public class EdmDownloader {
     public synchronized boolean isDone() {
         return done;
     }
-
+    
     private synchronized void setDone(boolean isDone) {
         this.done = isDone;
     }
@@ -235,7 +239,7 @@ public class EdmDownloader {
     public synchronized int getErrors() {
         return errors;
     }
-
+    
     public synchronized void incErrors() {
         ++errors;
     }
@@ -264,4 +268,5 @@ public class EdmDownloader {
         }
     }
 }
+
 

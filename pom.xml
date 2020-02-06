@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.ddb</groupId>
     <artifactId>europack</artifactId>
-    <version>3.1-beta.1</version>
+    <version>3.2-beta.1</version>
     <packaging>jar</packaging>
     <name>Europack</name>
     <url>https://mbuechner.github.io/europack/</url>

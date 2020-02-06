@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
+import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -96,6 +97,7 @@ public class WizardPage05 extends WizardPageEuropack {
         this.epfp = null;
     }
 
+    @Override
     public void cancel() {
         if (ddbidgetter != null) {
             ddbidgetter.setCanceled(true);
@@ -196,6 +198,11 @@ public class WizardPage05 extends WizardPageEuropack {
                             break; //while (!errors.isEmpty())
                         }
                         errors = CacheManager.getInstance().getErrorIds(cacheId);
+                    }
+                    try {
+                        Thread.sleep(500); // wait to run progressBarTimer again
+                    } catch (InterruptedException ex) {
+                        // nothing
                     }
                     progressBarTimer.stop();
                     setFinishEnabled(true);

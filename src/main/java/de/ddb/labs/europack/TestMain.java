@@ -86,7 +86,7 @@ public class TestMain {
 
         final EuropackFilterProcessor epfp = new EuropackFilterProcessor(cacheId, filter, sink);
         final EdmDownloader ehg = new EdmDownloader(cacheId, epfp);
-        final DDBIdGetter sd = new DDBIdGetter("https://api.deutsche-digitale-bibliothek.de", "provider_id:WOGJQYZO42L7ZIZQHKFIGHG3D6XQJGYW AND type_fct:mediatype_003", ehg);
+        final DDBIdGetter sd = new DDBIdGetter("https://api.deutsche-digitale-bibliothek.de", "provider_id:WOGJQYZO42L7ZIZQHKFIGHG3D6XQJGYW AND type_fct:mediatype_003", ehg, "");
 
         final Timer t = new Timer(10000, null);
         t.addActionListener((ActionEvent e) -> {
@@ -143,4 +143,5 @@ public class TestMain {
     }
 
 }
+
 

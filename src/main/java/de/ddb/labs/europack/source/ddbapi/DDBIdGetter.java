@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -56,6 +57,7 @@ public class DDBIdGetter {
     private List<String> firstIds;
     private int numberOfResults = -1;
     private int errors;
+    private String edmProfile;
 
     private final static List<String> TEST_IDS = new ArrayList<String>() {
         private static final long serialVersionUID = 7913459012651874859L;
@@ -74,17 +76,21 @@ public class DDBIdGetter {
     };
 
     public DDBIdGetter(String api, String query) throws InterruptedException, IOException {
-        this(api, query, null);
+        this(api, query, null, "");
     }
 
-    public DDBIdGetter(String api, String query, EdmDownloader downloader) throws InterruptedException, IOException {
+    public DDBIdGetter(String api, String query, EdmDownloader downloader, String edmProfile) throws InterruptedException, IOException {
         this.errors = 0;
         this.m = new ObjectMapper();
         this.downloader = downloader;
-        this.client = new OkHttpClient.Builder().build();
+        this.client = new OkHttpClient.Builder()
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .build();
         this.done = false;
         this.canceled = false;
         this.api = api;
+        this.edmProfile = edmProfile;
 
         final HashMap<String, String> hm = PreferencesUtil.getMap(Preferences.getPREFS(), "ddbapikeys");
         this.apiKey = hm.get(api);
@@ -125,14 +131,25 @@ public class DDBIdGetter {
             LOG.info("{} items added, it's {} all in all now.", list.size(), count);
 
             for (String ddbId : list) {
-                if (!isCanceled()) {
+                if (isCanceled()) {
                     break;
                 }
-                final Request request = new Request.Builder()
-                        .url(api + "/items/" + ddbId + "/edm")
-                        .addHeader("Accept", "application/xml")
-                        .addHeader("Authorization", "OAuth oauth_consumer_key=\"" + apiKey + "\"")
-                        .build();
+                Request request;
+
+                if (getEdmProfile().isBlank()) {
+                    request = new Request.Builder()
+                            .url(api + "/items/" + ddbId + "/edm")
+                            .addHeader("Accept", "application/xml")
+                            .addHeader("Authorization", "OAuth oauth_consumer_key=\"" + apiKey + "\"")
+                            .build();
+                } else {
+                    request = new Request.Builder()
+                            .url(api + "/items/" + ddbId + "/edm")
+                            .addHeader("Accept", "application/xml")
+                            .addHeader("Authorization", "OAuth oauth_consumer_key=\"" + apiKey + "\"")
+                            .addHeader("Accept-Profile", getEdmProfile())
+                            .build();
+                }
 
                 downloader.addDownloadJob(ddbId, request, false);
             }
@@ -292,5 +309,21 @@ public class DDBIdGetter {
     public synchronized boolean isDone() {
         return done;
     }
+
+    /**
+     * @return the edmProfile
+     */
+    public String getEdmProfile() {
+        return edmProfile;
+    }
+
+    /**
+     * @param edmProfile the edmProfile to set
+     */
+    public void setEdmProfile(String edmProfile) {
+        this.edmProfile = edmProfile;
+        LOG.info("EDM profile set to '{}'", this.edmProfile);
+    }
 }
+
 
