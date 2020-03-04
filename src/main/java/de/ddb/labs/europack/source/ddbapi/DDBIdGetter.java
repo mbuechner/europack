@@ -108,6 +108,9 @@ public class DDBIdGetter {
             this.query = URLEncoder.encode(query, "UTF-8");
         }
         this.firstIds = new ArrayList<>();
+        LOG.info("API: '{}'", this.api);
+        LOG.info("Search query: '{}'", this.query);
+        LOG.info("EDM profile: '{}'", this.edmProfile);
     }
 
     public void run() throws IOException {
@@ -165,11 +168,21 @@ public class DDBIdGetter {
 
     public void addAdditionalJobs(List<String> ddbIds, boolean removeFromErrors) {
         for (String ddbId : ddbIds) {
-            final Request request = new Request.Builder()
-                    .url(api + "/items/" + ddbId + "/edm")
-                    .addHeader("Accept", "application/xml")
-                    .addHeader("Authorization", "OAuth oauth_consumer_key=\"" + apiKey + "\"")
-                    .build();
+            Request request;
+            if (getEdmProfile().isBlank()) {
+                request = new Request.Builder()
+                        .url(api + "/items/" + ddbId + "/edm")
+                        .addHeader("Accept", "application/xml")
+                        .addHeader("Authorization", "OAuth oauth_consumer_key=\"" + apiKey + "\"")
+                        .build();
+            } else {
+                request = new Request.Builder()
+                        .url(api + "/items/" + ddbId + "/edm")
+                        .addHeader("Accept", "application/xml")
+                        .addHeader("Authorization", "OAuth oauth_consumer_key=\"" + apiKey + "\"")
+                        .addHeader("Accept-Profile", getEdmProfile())
+                        .build();
+            }
             downloader.addDownloadJob(ddbId, request, removeFromErrors);
         }
     }
@@ -325,5 +338,4 @@ public class DDBIdGetter {
         LOG.info("EDM profile set to '{}'", this.edmProfile);
     }
 }
-
 

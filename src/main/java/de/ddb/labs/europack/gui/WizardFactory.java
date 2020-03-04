@@ -20,17 +20,12 @@ import com.github.cjwizard.WizardPage;
 import com.github.cjwizard.WizardSettings;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JOptionPane;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Michael Büchner <m.buechner@dnb.de>
  */
 public class WizardFactory implements PageFactory {
-
-    private final static Logger LOG = LoggerFactory.getLogger(WizardFactory.class);
 
     private final static List<WizardPageEuropack> PAGES = new ArrayList<WizardPageEuropack>() {
         private static final long serialVersionUID = 6801682749191866940L;
@@ -84,7 +79,7 @@ public class WizardFactory implements PageFactory {
      */
     @Override
     public WizardPage createPage(List<WizardPage> path, WizardSettings settings) {
-        LOG.info("creating page " + path.size());
+        // LOG.info("creating page " + path.size());
 
         if (path.isEmpty()) {
             return PAGES.get(0);
@@ -97,7 +92,7 @@ public class WizardFactory implements PageFactory {
 
         for (int i = 0; i < PAGES.size(); i++) {
             if (PAGES.get(i) == lastPage) {
-                LOG.info("Returning page: " + PAGES.get(i + 1));
+                // LOG.info("Returning page: " + PAGES.get(i + 1));
                 return PAGES.get(i + 1);
             }
         }
@@ -117,3 +112,5 @@ public class WizardFactory implements PageFactory {
     }
 
 }
+
+

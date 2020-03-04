@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
-import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;

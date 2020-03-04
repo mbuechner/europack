@@ -41,8 +41,12 @@ public class Main {
     private final Wizard wizard;
 
     public static void main(String[] args) {
+        LOG.info("##########################################");
+        LOG.info("Europack started. Hello! ;-)");
         new Main().run();
     }
+    
+    
 
     public Main() {
         wizard = new Wizard();
@@ -87,9 +91,14 @@ public class Main {
 
         @Override
         public void windowClosing(WindowEvent e) {
+            LOG.info("Europack closed. Bye! :-(");
+            LOG.info("##########################################");
             wizard.dispose();
         }
 
     }
 }
+
+
+
 

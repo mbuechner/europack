@@ -156,7 +156,7 @@ public class ZipFileSink implements SinkInterface {
     }
 
     @Override
-    public void dispose() {
+    public synchronized void dispose() {
         try {
             if (zos != null) {
                 zos.close();
