@@ -1,17 +1,5 @@
 /*
- * Copyright 2019 Deutsche Digitale Bibliothek.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Source: https://stackoverflow.com/questions/13366780/how-to-add-real-time-date-and-time-into-a-jframe-component-e-g-status-bar
  */
 package de.ddb.labs.europack.gui.helper;
 
@@ -22,7 +10,6 @@ import javax.swing.JPanel;
 
 /**
  *
- * @author See https://stackoverflow.com/questions/13366780/how-to-add-real-time-date-and-time-into-a-jframe-component-e-g-status-bar
  */
 public final class SeparatorPanel extends JPanel {
 
@@ -46,6 +33,7 @@ public final class SeparatorPanel extends JPanel {
     }
 
 }
+
 
 
 

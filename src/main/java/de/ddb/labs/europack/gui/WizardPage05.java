@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,7 +182,7 @@ public class WizardPage05 extends WizardPageEuropack {
 
                     List<String> errors = CacheManager.getInstance().getErrorIds(cacheId);
                     while (!errors.isEmpty()) {
-                        LOG.error("There were {} errors: {}", errors.size(), errors);
+                        LOG.error("There were {} errors", errors.size());
                         final int confirm = JOptionPane.showOptionDialog(null,
                                 "There were " + errors.size() + " errors.\nShould I try to download and process them again?",
                                 "Exit Confirmation", JOptionPane.YES_NO_OPTION,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,13 @@ import org.w3c.dom.Document;
  */
 public class DctermsLinguisticSystemFilter implements FilterInterface {
 
-    final Transformer transformer;
+    private Transformer transformer;
 
-    public DctermsLinguisticSystemFilter() throws IOException, TransformerConfigurationException {
+    public DctermsLinguisticSystemFilter() {
+    }
+
+    @Override
+    public void init() throws IOException, TransformerConfigurationException {
         final String xsltFileName = "filters/" + DctermsLinguisticSystemFilter.class.getSimpleName() + ".xsl";
         final InputStream is = this.getClass().getClassLoader().getResourceAsStream(xsltFileName);
         final InputStreamReader isr = new InputStreamReader(is, Charset.forName("UTF-8"));

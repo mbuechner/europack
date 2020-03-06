@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import de.ddb.labs.europack.processor.EdmNamespaces;
 import de.ddb.labs.europack.processor.EuropackDoc;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -34,9 +33,13 @@ import org.w3c.dom.NodeList;
 public class CropRdfFilter implements FilterInterface {
 
     private static final Logger LOG = LoggerFactory.getLogger(CropRdfFilter.class);
-    private final DocumentBuilder builder;
+    private DocumentBuilder builder;
 
-    public CropRdfFilter() throws ParserConfigurationException, IllegalStateException {
+    public CropRdfFilter() {
+    }
+
+    @Override
+    public void init() throws Exception {
         final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(false);
         factory.setNamespaceAware(true);

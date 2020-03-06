@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,13 @@ public class DcTypeFilter implements FilterInterface {
     private final static String EX0 = "//*[namespace-uri()='" + EdmNamespaces.getNsUri().get("edm") + "' and local-name()='WebResource']\n"
             + "/*[namespace-uri()='" + EdmNamespaces.getNsUri().get("dc") + "' and local-name()='type']\n"
             + "[@*[namespace-uri()='" + EdmNamespaces.getNsUri().get("rdf") + "' and local-name()='resource']]";
-    private final XPathFactory factory;
+    private XPathFactory factory;
 
     public DcTypeFilter() {
+    }
+
+    @Override
+    public void init() throws Exception {
         factory = XPathFactory.newInstance();
         if (factory == null) {
             throw new IllegalStateException("XPathFactory is null. This filter won't work.");

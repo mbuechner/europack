@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,13 @@ import org.w3c.dom.NodeList;
 public class HierarchieFilter implements FilterInterface {
 
     private static final Logger LOG = LoggerFactory.getLogger(HierarchieFilter.class);
-    private final XPathFactory factory;
+    private XPathFactory factory;
 
     public HierarchieFilter() {
+    }
 
+    @Override
+    public void init() throws IllegalStateException {
         factory = XPathFactory.newInstance();
         if (factory == null) {
             throw new IllegalStateException("XPathFactory is null. This filter won't work.");

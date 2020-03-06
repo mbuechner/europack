@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,10 @@ public class EdmDataProviderFilter implements FilterInterface {
     public EdmDataProviderFilter() {
     }
 
+    @Override
+    public void init() throws Exception {
+    }
+    
     /**
      * ore:Aggregation/edm:dataProvider - Nur Elementinstanzen mit dem Wert
      * löschen, der mit "http" beginnt.Die Organization-URIs verweisen auf eine

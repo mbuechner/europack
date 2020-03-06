@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -47,9 +48,14 @@ public class ReformatterFilter implements FilterInterface {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReformatterFilter.class);
 
-    private final Transformer transformer;
+    private Transformer transformer;
 
-    public ReformatterFilter() throws IOException, TransformerConfigurationException {
+    public ReformatterFilter() {
+    }
+
+    @Override
+    public void init() throws IOException, TransformerConfigurationException {
+        DocumentBuilderFactory.newInstance().setNamespaceAware(true);
         final String xsltFileName = "filters/" + ReformatterFilter.class.getSimpleName() + ".xsl";
         final InputStream is = this.getClass().getClassLoader().getResourceAsStream(xsltFileName);
         final InputStreamReader isr = new InputStreamReader(is, Charset.forName("UTF-8"));
@@ -108,11 +114,17 @@ public class ReformatterFilter implements FilterInterface {
             if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
                 final String ns = currentNode.getNamespaceURI();
                 final String prefix = currentNode.getPrefix();
-                list.put(ns, prefix); // add ns of all nodes
+                if (ns != null && prefix != null) {
+                    list.put(ns, prefix); // add ns of all nodes
+                }
                 final NamedNodeMap nnm = currentNode.getAttributes();
                 for (int j = 0; j < nnm.getLength(); ++j) {
                     // list.put(nnm.item(j).getNamespaceURI(), nnm.item(j).getPrefix()); // add ns of all attr
-                    list.put(nnm.item(j).getNamespaceURI(), EdmNamespaces.getUriNs().get(nnm.item(j).getNamespaceURI()));
+                    final String attrNs = nnm.item(j).getNamespaceURI();
+                    final String attrPrefix = EdmNamespaces.getUriNs().get(nnm.item(j).getNamespaceURI());
+                    if (attrNs != null && attrPrefix != null) {
+                        list.put(attrNs, attrPrefix);
+                    }
                 }
                 findAllNamespaces(currentNode, list);
             }
@@ -127,6 +139,7 @@ public class ReformatterFilter implements FilterInterface {
      * @param ns
      */
     protected static void readChildNodes(Node node, Node root, Map<String, String> ns) {
+
         if (ns.containsKey(node.getNamespaceURI())) {
             final String prefix = ns.get(node.getNamespaceURI());
             node.setPrefix(prefix);
@@ -151,6 +164,7 @@ public class ReformatterFilter implements FilterInterface {
                 readChildNodes(currentNode, root, ns);
             }
         }
+
     }
 
     /**

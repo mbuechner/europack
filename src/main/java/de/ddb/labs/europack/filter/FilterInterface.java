@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,13 @@ public interface FilterInterface {
      * @throws Exception
      */
     public void filter(EuropackDoc ed) throws Exception;
+
+    /**
+     * This should be called before using the filter (like a constructor)
+     *
+     * @throws Exception
+     */
+    public void init() throws Exception;
 
     /**
      * Description of this Filter

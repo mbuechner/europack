@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Deutsche Digitale Bibliothek.
+ * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,21 +33,24 @@ import org.slf4j.LoggerFactory;
  * @author Michael Büchner <m.buechner@dnb.de>
  */
 public class EuropackFilterProcessor {
-
+    
     private final static Logger LOG = LoggerFactory.getLogger(EuropackFilterProcessor.class);
     private final String cacheId;
     private final List<String> queueIds;
-    private final int MAX_THREADS = 2; // two parallel jobs
+    private final int MAX_THREADS = Runtime.getRuntime().availableProcessors();
+    private static final String CACHED_POOL = "EuropackEDMProcessor";
     private final ExecutorService exe;
     private final List<String> filter;
     private final List<SinkInterface> sinks;
     private int addedJobs, processedJobs;
     private boolean canceled;
     private int errors;
-
+    
     public EuropackFilterProcessor(String cacheId, List<String> filter, List<SinkInterface> sinks) {
         this.queueIds = new ArrayList<>();
-        this.exe = Executors.newFixedThreadPool(MAX_THREADS);
+        // this.exe = Executors.newCachedThreadPool(new AppThreadFactory(CACHED_POOL));
+        this.exe = Executors.newFixedThreadPool(MAX_THREADS, new AppThreadFactory(CACHED_POOL));
+        LOG.info("Number of parallel processes set to '{}' (Number of processors)", MAX_THREADS);
         this.cacheId = cacheId;
         this.filter = filter;
         this.addedJobs = 0;
@@ -55,7 +59,7 @@ public class EuropackFilterProcessor {
         this.sinks = sinks;
         this.canceled = false;
     }
-
+    
     public void reset() {
         this.queueIds.clear();
         this.addedJobs = 0;
@@ -63,14 +67,21 @@ public class EuropackFilterProcessor {
         this.errors = 0;
         this.canceled = false;
     }
-
+    
     public synchronized void addJob(String id) {
         if (canceled) {
             return;
         }
         queueIds.add(id);
         try {
-            exe.execute(new MyRunnable(id));
+            final Future handler = exe.submit(new MyRunnable(id));
+            // cancel after 10 Sek
+//            exe.schedule(new Runnable() {
+//                public void run() {
+//                    handler.cancel(true);
+//                    LOG.error("{}: was canceled after 10 sec. no response", id);
+//                }
+//            }, 10, TimeUnit.SECONDS);
             ++addedJobs;
         } catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InstantiationException | NoSuchMethodException | InvocationTargetException ex) {
             LOG.error("{}: Cannot filter item. {}", id, ex.getMessage(), ex);
@@ -79,27 +90,27 @@ public class EuropackFilterProcessor {
             LOG.info("{} added jobs, {} processed jobs", addedJobs, processedJobs);
         }
     }
-
+    
     public void dispose() {
         for (SinkInterface sink : sinks) {
             sink.dispose();
         }
         exe.shutdownNow();
     }
-
+    
     public synchronized boolean isDone() {
         return addedJobs <= processedJobs;
     }
-
+    
     private class MyRunnable implements Runnable {
-
+        
         private final String id;
         private final List<FilterInterface> filterInstance;
-
+        
         public MyRunnable(String id) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
             this.filterInstance = new ArrayList<>();
             this.id = id;
-
+            
             for (String f : filter) {
                 final Class<?> act = Class.forName("de.ddb.labs.europack.filter." + f);
                 final Constructor<?> constr = act.getConstructor();
@@ -107,7 +118,7 @@ public class EuropackFilterProcessor {
                 filterInstance.add(fi);
             }
         }
-
+        
         @Override
         public void run() {
             if (isCanceled()) {
@@ -128,6 +139,7 @@ public class EuropackFilterProcessor {
                 }
                 try {
                     if (ed.getStatus() == EuropackDoc.Status.VALID) {
+                        f.init();
                         f.filter(ed);
                     }
                 } catch (Exception | StackOverflowError ex) {
@@ -169,7 +181,7 @@ public class EuropackFilterProcessor {
     public int getErrors() {
         return errors;
     }
-
+    
     public synchronized boolean hadErrors() {
         return errors > 0;
     }
@@ -186,7 +198,7 @@ public class EuropackFilterProcessor {
     public synchronized int incProcessedJobs() {
         return ++processedJobs;
     }
-
+    
     public synchronized int getProcessedJobs() {
         return processedJobs;
     }
@@ -214,3 +226,5 @@ public class EuropackFilterProcessor {
         }
     }
 }
+
+

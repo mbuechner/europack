@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,13 @@ public class DdbAggregatorFilter implements FilterInterface {
     // select <ddb:aggregator ns6:resource="http://www.deutsche-digitale-bibliothek.de/organization/X6VKVOM5HGHDIQX36BI3ZKWROZTN74UX" />
     private final static String EX0 = "//*[namespace-uri()='" + EdmNamespaces.getNsUri().get("ore") + "' and local-name()='Aggregation']\n"
             + "/*[namespace-uri()='" + EdmNamespaces.getNsUri().get("ddb") + "' and local-name()='aggregator']";
-    private final XPathFactory factory;
+    private XPathFactory factory;
 
     public DdbAggregatorFilter() {
+    }
 
+    @Override
+    public void init() throws Exception {
         factory = XPathFactory.newInstance();
         if (factory == null) {
             throw new IllegalStateException("XPathFactory is null. This filter won't work.");
