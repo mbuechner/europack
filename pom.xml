@@ -25,6 +25,11 @@
         <name>Deutsche Digitale Bibliothek</name>
         <url>https://www.deutsche-digitale-bibliothek.de/</url>
     </organization>
+    <properties>
+        <sonar.projectKey>mbuechner_europack</sonar.projectKey>
+        <sonar.organization>mbuechner</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    </properties>
     <issueManagement>
         <system>GitHub</system>
         <url>https://github.com/mbuechner/europack/issues</url>
