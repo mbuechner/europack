@@ -25,11 +25,6 @@
         <name>Deutsche Digitale Bibliothek</name>
         <url>https://www.deutsche-digitale-bibliothek.de/</url>
     </organization>
-    <properties>
-        <sonar.projectKey>mbuechner_europack</sonar.projectKey>
-        <sonar.organization>mbuechner</sonar.organization>
-        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-    </properties>
     <issueManagement>
         <system>GitHub</system>
         <url>https://github.com/mbuechner/europack/issues</url>
@@ -42,6 +37,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <sonar.projectKey>mbuechner_europack</sonar.projectKey>
+        <sonar.organization>mbuechner</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
     <repositories>
         <repository>
