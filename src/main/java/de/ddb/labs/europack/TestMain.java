@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package de.ddb.labs.europack;
 
 import de.ddb.labs.europack.source.ddbapi.EdmDownloader;
@@ -56,10 +55,12 @@ public class TestMain {
         CacheManager.getInstance().addCache(cacheId);
 
         final List<String> filter = new ArrayList<String>() {
-            private static final long serialVersionUID = -4920951508743312615L;       
+            private static final long serialVersionUID = -4920951508743312615L;
+
             {
                 add("CropRdfFilter");
                 add("HierarchieFilter");
+                add("VgBildKunstFilter");
                 add("DcDescriptionFilter");
                 add("DctermsLanguageFilter");
                 add("DctermsLinguisticSystemFilter");
@@ -87,7 +88,8 @@ public class TestMain {
 
         final EuropackFilterProcessor epfp = new EuropackFilterProcessor(cacheId, filter, sink);
         final EdmDownloader ehg = new EdmDownloader(cacheId, epfp);
-        final DDBIdGetter sd = new DDBIdGetter("https://api.deutsche-digitale-bibliothek.de", "provider_id:WOGJQYZO42L7ZIZQHKFIGHG3D6XQJGYW AND type_fct:mediatype_003", ehg, "");
+        // final DDBIdGetter sd = new DDBIdGetter("https://api.deutsche-digitale-bibliothek.de", "provider_id:WOGJQYZO42L7ZIZQHKFIGHG3D6XQJGYW AND type_fct:mediatype_003", ehg, "");
+        final DDBIdGetter sd = new DDBIdGetter("https://api-q1.deutsche-digitale-bibliothek.de", "dataset_id:34753197757685558nKKn", ehg, "");
 
         final Timer t = new Timer(10000, null);
         t.addActionListener((ActionEvent e) -> {
@@ -144,6 +146,3 @@ public class TestMain {
     }
 
 }
-
-
-
