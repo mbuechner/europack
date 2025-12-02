@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class Main {
                     // nothing
                 }
                 wizard.setTitle(properties.getProperty("europack.title", "Europack") + " " + properties.getProperty("europack.version", "").trim());
-                wizard.setMinimumSize(new Dimension(800, 600));
+                wizard.setMinimumSize(new Dimension(1200, 800));
                 wizard.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
                 wizard.setLocationRelativeTo(null);
                 wizard.setVisible(true);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import de.ddb.labs.europack.sink.SinkInterface;
 import de.ddb.labs.europack.source.ddbapi.CacheManager;
 import de.ddb.labs.europack.source.ddbapi.DDBIdGetter;
 import de.ddb.labs.europack.source.ddbapi.EdmDownloader;
+import de.ddb.labs.europack.source.ddbapi.HttpClientProvider;
+
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
@@ -77,6 +79,7 @@ public class WizardPage05 extends WizardPageEuropack {
 
     private final Random rand = new Random();
     private Timer progressBarTimer;
+    private Timer quoteTimer;
 
     /**
      * Creates new form WizardLoad
@@ -88,9 +91,10 @@ public class WizardPage05 extends WizardPageEuropack {
         super(title, description);
         initComponents();
         jTextArea1.setText(QUOTES.get(rand.nextInt(QUOTES.size())));
-        new Timer(15000, (ActionEvent e) -> {
+        this.quoteTimer = new Timer(15000, (ActionEvent e) -> {
             jTextArea1.setText(QUOTES.get(rand.nextInt(QUOTES.size())));
-        }).start();
+        });
+        this.quoteTimer.start();
         this.ddbidgetter = null;
         this.edmdown = null;
         this.epfp = null;
@@ -107,6 +111,8 @@ public class WizardPage05 extends WizardPageEuropack {
         if (epfp != null) {
             epfp.setCanceled(true);
         }
+        // Stop metrics scheduler if enabled
+        HttpClientProvider.shutdownMetrics();
     }
 
     @Override
@@ -115,15 +121,20 @@ public class WizardPage05 extends WizardPageEuropack {
         if (this.progressBarTimer != null) {
             this.progressBarTimer.stop();
         }
+        if (this.quoteTimer != null) {
+            this.quoteTimer.stop();
+        }
         if (ddbidgetter != null) {
             ddbidgetter.dispose();
         }
         if (edmdown != null) {
-            ddbidgetter.dispose();
+            edmdown.dispose();
         }
         if (epfp != null) {
-            ddbidgetter.dispose();
+            epfp.dispose();
         }
+        // Stop metrics scheduler if enabled
+        HttpClientProvider.shutdownMetrics();
     }
 
     /**
@@ -135,6 +146,8 @@ public class WizardPage05 extends WizardPageEuropack {
     public void rendering(List<WizardPage> path, WizardSettings settings) {
         try {
             super.rendering(path, settings);
+            // Start a fresh metrics run
+            HttpClientProvider.resetAndStartMetrics();
             jTextPane1.setText(""); //clear output
             setPrevEnabled(false);
             setNextEnabled(false);
@@ -150,7 +163,9 @@ public class WizardPage05 extends WizardPageEuropack {
             final String cacheId = UUID.randomUUID().toString();
             CacheManager.getInstance().addCache(cacheId);
 
+            @SuppressWarnings("unchecked")
             final List<String> filters = (List<String>) settings.get("filters");
+            @SuppressWarnings("unchecked")
             final List<SinkInterface> sinks = (List<SinkInterface>) settings.get("sink");
             ddbidgetter = (DDBIdGetter) settings.get(DDBIdGetter.class.getSimpleName());
             epfp = new EuropackFilterProcessor(cacheId, filters, sinks);
@@ -178,6 +193,11 @@ public class WizardPage05 extends WizardPageEuropack {
                     // wait until everyone's finished
                     while (!ddbidgetter.isDone() || !edmdown.isDone() || !epfp.isDone()) {
                         if(ddbidgetter.isCanceled() || edmdown.isCanceled() || epfp.isCanceled()) break;
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException ex) {
+                            // nothing
+                        }
                     }
 
                     List<String> errors = CacheManager.getInstance().getErrorIds(cacheId);
@@ -212,6 +232,8 @@ public class WizardPage05 extends WizardPageEuropack {
                     edmdown.dispose();
                     epfp.dispose();
                     CacheManager.getInstance().removeCache(cacheId);
+                    // End-of-run: emit summary and reset metrics
+                    HttpClientProvider.shutdownMetrics();
                 } catch (IOException ex) {
                     LOG.error("{}", ex.getMessage(), ex);
                     JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 /**
  *
@@ -46,6 +47,7 @@ import org.slf4j.LoggerFactory;
 public class DDBIdGetter {
 
     private final static Logger LOG = LoggerFactory.getLogger(DDBIdGetter.class);
+    private static final Marker FILE_MARKER = MarkerFactory.getMarker("FILE");
     private final static int ENTITYCOUNT = 1000; // count of entities per query
     private final String api;
     private final String apiKey;
@@ -83,10 +85,7 @@ public class DDBIdGetter {
         this.errors = 0;
         this.m = new ObjectMapper();
         this.downloader = downloader;
-        this.client = new OkHttpClient.Builder()
-                .connectTimeout(60, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .build();
+        this.client = HttpClientProvider.getClient();
         this.done = false;
         this.canceled = false;
         this.api = api;
@@ -115,7 +114,7 @@ public class DDBIdGetter {
 
     public void run() throws IOException {
         if (downloader == null) {
-            LOG.error("EdmDownloader is null");
+            LOG.error(FILE_MARKER, "EdmDownloader is null");
             return;
         }
         done = false;
@@ -131,7 +130,7 @@ public class DDBIdGetter {
             final List<String> list = new ArrayList<>();
             final String nextCursorMarkTmp = findDdbIds(list, nextCursorMark);
             count += list.size();
-            LOG.info("{} items added, it's {} all in all now.", list.size(), count);
+            LOG.info(FILE_MARKER, "{} items added, it's {} all in all now.", list.size(), count);
 
             for (String ddbId : list) {
                 if (isCanceled()) {
@@ -214,25 +213,26 @@ public class DDBIdGetter {
                 .addHeader("Accept", "application/json")
                 .addHeader("Authorization", "OAuth oauth_consumer_key=\"" + apiKey + "\"")
                 .build();
-        final Response response = client.newCall(request).execute();
-        if (response.isSuccessful()) {
-            final ResponseBody rb = response.body();
-            if (rb != null) {
-                try (final InputStream searchResult = rb.byteStream()) {
-                    final JsonNode jnrt = m.readTree(searchResult);
-                    if (firstIds.isEmpty()) {
-                        final List<JsonNode> resultsNode = jnrt.findValues("id");
-                        for (JsonNode jn : resultsNode) {
-                            if (jn.isTextual() && jn.asText("").length() == 32) {
-                                firstIds.add(jn.asText());
+        try (final Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful()) {
+                final ResponseBody rb = response.body();
+                if (rb != null) {
+                    try (final InputStream searchResult = rb.byteStream()) {
+                        final JsonNode jnrt = m.readTree(searchResult);
+                        if (firstIds.isEmpty()) {
+                            final List<JsonNode> resultsNode = jnrt.findValues("id");
+                            for (JsonNode jn : resultsNode) {
+                                if (jn.isTextual() && jn.asText("").length() == 32) {
+                                    firstIds.add(jn.asText());
+                                }
                             }
                         }
+                        numberOfResults = jnrt.get("numberOfResults").asInt(-1);
                     }
-                    numberOfResults = jnrt.get("numberOfResults").asInt(-1);
                 }
+            } else {
+                throw new ConnectException("Response for " + response.request().url().toString() + " is " + response.code() + " (" + response.message() + ")");
             }
-        } else {
-            throw new ConnectException("Response for " + response.request().url().toString() + " is " + response.code() + " (" + response.message() + ")");
         }
         return numberOfResults;
     }
@@ -258,36 +258,38 @@ public class DDBIdGetter {
             String nextCursorMark = null;
             final String urltmp = api + "/search?query=" + query
                     + "&cursorMark=" + URLEncoder.encode(cursorMark, Charset.forName("UTF-8"))
-                    + "&rows=" + ENTITYCOUNT;
+                    + "&rows=" + ENTITYCOUNT
+                    + "&sort=" + URLEncoder.encode("id asc", Charset.forName("UTF-8"));
 
             final Request request = new Request.Builder()
                     .url(urltmp)
                     .addHeader("Accept", "application/json")
                     .addHeader("Authorization", "OAuth oauth_consumer_key=\"" + apiKey + "\"")
                     .build();
-            final Response response = client.newCall(request).execute();
+            try (final Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful()) {
+                    final ResponseBody rb = response.body();
+                    if (rb != null) {
+                        try (final InputStream searchResult = rb.byteStream()) {
+                            final JsonNode jnrt = m.readTree(searchResult);
+                            final List<JsonNode> resultsNode = jnrt.findValues("id");
+                            nextCursorMark = jnrt.get("nextCursorMark").asText("");
+                            LOG.debug("cursorMark in/out: {} -> {}", cursorMark, nextCursorMark);
 
-            if (response.isSuccessful()) {
-                final ResponseBody rb = response.body();
-                if (rb != null) {
-                    try (final InputStream searchResult = rb.byteStream()) {
-                        final JsonNode jnrt = m.readTree(searchResult);
-                        final List<JsonNode> resultsNode = jnrt.findValues("id");
-                        nextCursorMark = jnrt.get("nextCursorMark").asText("");
-
-                        for (JsonNode jn : resultsNode) {
-                            if (jn.isTextual() && jn.asText("").length() == 32) {
-                                list.add(jn.asText());
+                            for (JsonNode jn : resultsNode) {
+                                if (jn.isTextual() && jn.asText("").length() == 32) {
+                                    list.add(jn.asText());
+                                }
                             }
                         }
                     }
+                } else {
+                    throw new ConnectException(response.toString());
                 }
-            } else {
-                throw new ConnectException(response.toString());
             }
             return nextCursorMark;
         } catch (IOException ex) {
-            LOG.error("{}", ex.getMessage());
+            LOG.error(FILE_MARKER, "{}", ex.getMessage());
             return null;
         }
     }
@@ -338,5 +340,3 @@ public class DDBIdGetter {
         LOG.info("EDM profile set to '{}'", this.edmProfile);
     }
 }
-
-

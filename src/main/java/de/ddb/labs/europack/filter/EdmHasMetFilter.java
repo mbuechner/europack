@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import de.ddb.labs.europack.processor.EdmNamespaces;
 import de.ddb.labs.europack.processor.EuropackDoc;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -31,7 +29,7 @@ import org.w3c.dom.NodeList;
  */
 public class EdmHasMetFilter implements FilterInterface {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EdmHasMetFilter.class);
+    // private static final Logger LOG = LoggerFactory.getLogger(EdmHasMetFilter.class);
 
     public EdmHasMetFilter() {
     }

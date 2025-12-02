@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,17 @@ import de.ddb.labs.europack.processor.EuropackFilterProcessor;
 import de.ddb.labs.europack.processor.EuropackDoc;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.ParserConfigurationException;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.xml.sax.SAXException;
 
 /**
@@ -39,11 +38,8 @@ import org.xml.sax.SAXException;
 public class EdmDownloader {
 
     private final static Logger LOG = LoggerFactory.getLogger(EdmDownloader.class);
-    private final static int MAX_REQUESTS = 100;
-    private final static int MAX_REQUESTS_PER_HOST = 4;
-    private final static int CONNECTTIMEOUT = 10;
-    private final static int WRITETIMEOUT = 10;
-    private final static int READTIMEOUT = 30;
+    private static final Marker FILE_MARKER = MarkerFactory.getMarker("FILE");
+
     private final OkHttpClient client;
     private final String cacheId;
     private final EuropackFilterProcessor epfp;
@@ -52,16 +48,7 @@ public class EdmDownloader {
     private int errors;
 
     public EdmDownloader(String cacheId, EuropackFilterProcessor epfp) throws InterruptedException, IOException {
-        final Dispatcher dispatcher = new Dispatcher();
-        dispatcher.setMaxRequests(MAX_REQUESTS);
-        dispatcher.setMaxRequestsPerHost(MAX_REQUESTS_PER_HOST);
-
-        client = new OkHttpClient.Builder()
-                .connectTimeout(CONNECTTIMEOUT, TimeUnit.SECONDS)
-                .writeTimeout(WRITETIMEOUT, TimeUnit.SECONDS)
-                .readTimeout(READTIMEOUT, TimeUnit.SECONDS)
-                .dispatcher(dispatcher)
-                .build();
+        client = HttpClientProvider.getClient();
         this.cacheId = cacheId;
         this.epfp = epfp;
         this.itemsDowloaded = 0;
@@ -79,19 +66,17 @@ public class EdmDownloader {
         try {
             client.newCall(request).enqueue(new MyCallback(ddbId));
         } catch (Exception e) {
-            LOG.error("{}", e.getMessage(), e);
+            LOG.error(FILE_MARKER, "{}", e.getMessage(), e);
         }
         this.done = false;
         if (removeFromErrors) {
-            --errors;
-            epfp.setErrors(epfp.getErrors() - 1);
-            final Iterator<EuropackDoc> ied = CacheManager.getInstance().getErrors(cacheId).iterator();
-            while (ied.hasNext()) {
-                final EuropackDoc ed = ied.next();
-                if (ed.getId().equals(ddbId)) {
-                    ied.remove();
-                    break;
+            final boolean removed = CacheManager.getInstance().removeErrorById(cacheId, ddbId);
+            if (removed) {
+                if (errors > 0) {
+                    --errors;
                 }
+                final int epfpErrors = epfp.getErrors();
+                epfp.setErrors(Math.max(0, epfpErrors - 1));
             }
         }
     }
@@ -130,7 +115,7 @@ public class EdmDownloader {
             if (isCanceled()) {
                 return;
             }
-            LOG.error("{}: {}", id, e.getLocalizedMessage(), e);
+            LOG.error(FILE_MARKER, "{}: {}", id, e.getLocalizedMessage(), e);
             CacheManager.getInstance().addError(cacheId, new EuropackDoc(id));
             incErrors();
             finishing();
@@ -156,7 +141,7 @@ public class EdmDownloader {
                 }
 
             } catch (ConnectException | IllegalArgumentException | SAXException | ParserConfigurationException | NullPointerException ex) {
-                LOG.error("{}: {}", id, ex.getMessage());
+                LOG.error(FILE_MARKER, "{}: {}", id, ex.getMessage());
                 CacheManager.getInstance().addError(cacheId, new EuropackDoc(id));
                 incErrors();
             } finally {
@@ -168,11 +153,13 @@ public class EdmDownloader {
             final int getItemsDowloaded = incItemsDowloaded();
             final int getItemsToDownload = getItemsToDownload();
             if (getItemsDowloaded % 1000 == 0 || getItemsDowloaded >= getItemsToDownload) {
-                LOG.info("{} of {} downloaded", getItemsDowloaded, (getItemsToDownload == Integer.MAX_VALUE ? "?" : getItemsToDownload));
+                LOG.info(FILE_MARKER, "{} of {} downloaded", getItemsDowloaded, (getItemsToDownload == Integer.MAX_VALUE ? "?" : getItemsToDownload));
             }
             if (getItemsDowloaded >= getItemsToDownload) {
                 setDone(true);
             }
+            // Update domain metrics snapshot
+            HttpClientProvider.updateDownloadProgress(getItemsToDownload, getItemsDowloaded, errors);
         }
 
     }

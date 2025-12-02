@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class PreferencesUtil {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     public static HashMap<String, String> getMap(Preferences pref, String key) {
         try {
             final Object o = deserialize(pref.get(key, ""));

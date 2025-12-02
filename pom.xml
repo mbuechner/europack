@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.ddb</groupId>
     <artifactId>europack</artifactId>
-    <version>3.3-beta.2</version>
+    <version>3.4-beta.1</version>
     <packaging>jar</packaging>
     <name>Europack</name>
     <url>https://mbuechner.github.io/europack/</url>
@@ -35,25 +37,53 @@
     </scm>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
     </properties>
     <repositories>
         <repository>
-            <id>jcenter</id>
-            <url>https://jcenter.bintray.com/</url>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
-    <dependencies>      
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp-bom</artifactId>
+                <version>5.2.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Force stable JAXB versions from Maven Central (avoid old java.net repos) -->
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>4.0.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-core</artifactId>
+                <version>4.0.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>4.0.6</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <dependencies>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.4.3</version>
-        </dependency>   
-        <dependency> 
-            <groupId>com.github.cjwizard</groupId> 
-            <artifactId>cjwizard</artifactId> 
-            <version>1.0.9</version>
+            <version>1.5.21</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.cjwizard.cjwizard</groupId>
+            <artifactId>cjwizard</artifactId>
+            <version>cjwizard-1.0.9.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -65,28 +95,27 @@
         <dependency>
             <groupId>org.ehcache</groupId>
             <artifactId>ehcache</artifactId>
-            <version>3.9.9</version>
+            <version>3.11.1</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.14.0-rc1</version>
+            <version>2.20.1</version>
             <type>jar</type>
         </dependency>
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>xalan</groupId>
             <artifactId>xalan</artifactId>
             <version>2.7.2</version>
         </dependency>-->
-<!--             <dependency>
+        <!--             <dependency>
             <groupId>xerces</groupId>
             <artifactId>xercesImpl</artifactId>
             <version>2.12.0</version>
         </dependency>-->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>4.10.0</version>
+            <artifactId>okhttp-jvm</artifactId>
         </dependency>
     </dependencies>
     <build>
@@ -96,13 +125,13 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
-        </resources>   
+        </resources>
         <plugins>
             <!-- -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.5.0</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -117,7 +146,7 @@
             <plugin>
                 <groupId>com.hubspot.maven.plugins</groupId>
                 <artifactId>slimfast-plugin</artifactId>
-                <version>0.19</version>
+                <version>1.0.1</version>
                 <executions>
                     <execution>
                         <goals>
@@ -131,7 +160,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <id>enforce-version</id>
@@ -142,7 +171,7 @@
                             <rules>
                                 <bannedDependencies>
                                     <excludes>
-                                        <!-- exclude all versions lower than 1.7.25 (included in Logback) -->                                   
+                                        <!-- exclude all versions lower than 1.7.25 (included in Logback) -->
                                         <exclude>org.slf4j:slf4j-api:[0.0,1.7.25)</exclude>
                                     </excludes>
                                 </bannedDependencies>
@@ -154,15 +183,20 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.14.1</version>
                 <configuration>
                     <showDeprecation>false</showDeprecation>
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
+            </plugin>
+            <plugin>
                 <groupId>com.akathist.maven.plugins.launch4j</groupId>
                 <artifactId>launch4j-maven-plugin</artifactId>
-                <version>2.1.2</version>
+                <version>2.6.0</version>
                 <executions>
                     <execution>
                         <id>l4j-gui</id>
@@ -182,7 +216,7 @@
                             </classPath>
                             <icon>src/main/resources/icon.ico</icon>
                             <jre>
-                                <minVersion>11</minVersion>
+                                <minVersion>21</minVersion>
                                 <!--<maxVersion>1.8.0</maxVersion>-->
                                 <initialHeapSize>2048</initialHeapSize>
                                 <maxHeapSize>4096</maxHeapSize>
@@ -194,7 +228,7 @@
                                 <fileVersion>1.0.0.0</fileVersion>
                                 <txtFileVersion>1.0.0.0</txtFileVersion>
                                 <fileDescription>${project.name} - The Grand Europeana Data Wizard King</fileDescription>
-                                <copyright>Copyright (c) 2019-2021 Michael Büchner</copyright>
+                                <copyright>Copyright (c) 2019-2025 Michael Büchner</copyright>
                                 <companyName>Deutsche Digitale Bibliothek</companyName>
                                 <productVersion>3.0.0.0</productVersion>
                                 <txtProductVersion>${project.version}</txtProductVersion>
@@ -206,7 +240,7 @@
                             <messages>
                                 <startupErr>Error while starting ${project.name}.</startupErr>
                                 <bundledJreErr>Bundle error startung ${project.name}.</bundledJreErr>
-                                <jreVersionErr>${project.name} does require Java 11 or higher. Either install it on your system or put it into the subfolder jre/. Thanks!</jreVersionErr>
+                                <jreVersionErr>${project.name} does require Java 21 or higher. Either install it on your system or put it into the subfolder jre/. Thanks!</jreVersionErr>
                                 <launcherErr>Error running ${project.name}.</launcherErr>
                                 Used by console header only. 
                                 <instanceAlreadyExistsMsg>${project.name} is already running.</instanceAlreadyExistsMsg>
@@ -218,7 +252,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.4.2</version>
+                <version>3.8.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -238,7 +272,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.12.1</version>
+                <version>3.21.0</version>
                 <configuration>
                     <outputDirectory>${basedir}/docs</outputDirectory>
                 </configuration>
@@ -250,17 +284,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.12.1</version>
+                <version>3.21.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.9.0</version>
             </plugin>
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.7.2.0</version>
+                <version>4.9.3.0</version>
             </plugin>
         </plugins>
     </reporting>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -33,7 +31,7 @@ import org.w3c.dom.NodeList;
  */
 public class DcTypeFilter implements FilterInterface {
 
-    private final static Logger LOG = LoggerFactory.getLogger(DcTypeFilter.class);
+    // private final static Logger LOG = LoggerFactory.getLogger(DcTypeFilter.class);
     // select <dc:type rdf:resource="http://ddb.vocnet.org/medientyp/mt002" />
     private final static String EX0 = "//*[namespace-uri()='" + EdmNamespaces.getNsUri().get("edm") + "' and local-name()='WebResource']\n"
             + "/*[namespace-uri()='" + EdmNamespaces.getNsUri().get("dc") + "' and local-name()='type']\n"

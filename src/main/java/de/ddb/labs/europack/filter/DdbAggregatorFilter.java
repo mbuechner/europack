@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -33,7 +31,7 @@ import org.w3c.dom.NodeList;
  */
 public class DdbAggregatorFilter implements FilterInterface {
 
-    private final static Logger LOG = LoggerFactory.getLogger(DdbAggregatorFilter.class);
+    // private final static Logger LOG = LoggerFactory.getLogger(DdbAggregatorFilter.class);
     // select <ddb:aggregator ns6:resource="http://www.deutsche-digitale-bibliothek.de/organization/X6VKVOM5HGHDIQX36BI3ZKWROZTN74UX" />
     private final static String EX0 = "//*[namespace-uri()='" + EdmNamespaces.getNsUri().get("ore") + "' and local-name()='Aggregation']\n"
             + "/*[namespace-uri()='" + EdmNamespaces.getNsUri().get("ddb") + "' and local-name()='aggregator']";

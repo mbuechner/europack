@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,18 @@ package de.ddb.labs.europack.processor;
 import de.ddb.labs.europack.filter.FilterInterface;
 import de.ddb.labs.europack.sink.SinkInterface;
 import de.ddb.labs.europack.source.ddbapi.CacheManager;
+import de.ddb.labs.europack.source.ddbapi.HttpClientProvider;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 /**
  *
@@ -35,6 +38,7 @@ import org.slf4j.LoggerFactory;
 public class EuropackFilterProcessor {
     
     private final static Logger LOG = LoggerFactory.getLogger(EuropackFilterProcessor.class);
+    private static final Marker FILE_MARKER = MarkerFactory.getMarker("FILE");
     private final String cacheId;
     private final List<String> queueIds;
     private final int MAX_THREADS = Runtime.getRuntime().availableProcessors();
@@ -74,17 +78,18 @@ public class EuropackFilterProcessor {
         }
         queueIds.add(id);
         try {
-            final Future handler = exe.submit(new MyRunnable(id));
+            exe.submit(new MyRunnable(id));
+//          final Future handler = exe.submit(new MyRunnable(id));
             // cancel after 10 Sek
-//            exe.schedule(new Runnable() {
-//                public void run() {
-//                    handler.cancel(true);
-//                    LOG.error("{}: was canceled after 10 sec. no response", id);
-//                }
-//            }, 10, TimeUnit.SECONDS);
+//          exe.schedule(new Runnable() {
+//              public void run() {
+//                  handler.cancel(true);
+//                  LOG.error("{}: was canceled after 10 sec. no response", id);
+//              }
+//          }, 10, TimeUnit.SECONDS);
             ++addedJobs;
         } catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InstantiationException | NoSuchMethodException | InvocationTargetException ex) {
-            LOG.error("{}: Cannot filter item. {}", id, ex.getMessage(), ex);
+            LOG.error(FILE_MARKER, "{}: Cannot filter item. {}", id, ex.getMessage(), ex);
         }
         if (addedJobs % 1000 == 0) {
             LOG.info("{} added jobs, {} processed jobs", addedJobs, processedJobs);
@@ -146,7 +151,7 @@ public class EuropackFilterProcessor {
                     ed.setStatus(EuropackDoc.Status.INVALID_FILTER_FAILED);
                     CacheManager.getInstance().addError(cacheId, ed);
                     incErrors();
-                    LOG.error("{}: {} said {}", id, f.getName(), ex.getMessage());
+                    LOG.error(FILE_MARKER, "{}: {} said {}", id, f.getName(), ex.getMessage());
                 }
             }
             if (ed.getStatus() == EuropackDoc.Status.VALID) {
@@ -160,7 +165,7 @@ public class EuropackFilterProcessor {
                         ed.setStatus(EuropackDoc.Status.INVALID_SAVE);
                         CacheManager.getInstance().addError(cacheId, ed);
                         incErrors();
-                        LOG.error("{}: {} said {}", id, sink.getName(), ex.getMessage());
+                        LOG.error(FILE_MARKER, "{}: {} said {}", id, sink.getName(), ex.getMessage());
                     }
                 }
             }
@@ -196,7 +201,11 @@ public class EuropackFilterProcessor {
     /**
      */
     public synchronized int incProcessedJobs() {
-        return ++processedJobs;
+        int v = ++processedJobs;
+        // refresh processor error snapshot along with progress
+        HttpClientProvider.updateProcessorErrors(errors);
+        HttpClientProvider.updateProcessed(v);
+        return v;
     }
     
     public synchronized int getProcessedJobs() {
@@ -207,6 +216,7 @@ public class EuropackFilterProcessor {
      */
     public synchronized void incErrors() {
         ++errors;
+        HttpClientProvider.updateProcessorErrors(errors);
     }
 
     /**

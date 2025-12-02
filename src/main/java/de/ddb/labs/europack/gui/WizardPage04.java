@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,7 +171,7 @@ public class WizardPage04 extends WizardPageEuropack {
             numberOfObectsInFile = 0;
         }
 
-        final DefaultListModel listModel = (DefaultListModel) jList1.getModel();
+        final DefaultListModel<String> listModel = (DefaultListModel<String>) jList1.getModel();
         final List<String> filenameList = Collections.list(listModel.elements());
 
         try {
@@ -307,7 +307,7 @@ public class WizardPage04 extends WizardPageEuropack {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jList1.setModel(new DefaultListModel());
+        jList1.setModel(new DefaultListModel<>());
         jScrollPane1.setViewportView(jList1);
 
         jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder("Options"));
@@ -475,7 +475,7 @@ public class WizardPage04 extends WizardPageEuropack {
 
     private void jCheckBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox2ActionPerformed
         if (jCheckBox2.isSelected()) {
-            final DefaultListModel listModel = (DefaultListModel) jList1.getModel();
+            final DefaultListModel<String> listModel = (DefaultListModel<String>) jList1.getModel();
             if (listModel.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "ZIP output is not configured valid", "Error", JOptionPane.ERROR_MESSAGE);
                 jCheckBox2.setSelected(false);
@@ -549,7 +549,7 @@ public class WizardPage04 extends WizardPageEuropack {
             numberOfObectsInFile = 0;
         }
 
-        final DefaultListModel listModel = (DefaultListModel) jList1.getModel();
+        final DefaultListModel<String> listModel = (DefaultListModel<String>) jList1.getModel();
         listModel.removeAllElements();
 
         if (countOfObjects < 1 || numberOfObectsInFile < 1 || !jTextField2.getText().contains("[C]")) {

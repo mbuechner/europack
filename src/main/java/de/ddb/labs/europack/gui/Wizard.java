@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,11 @@ public class Wizard extends JFrame {
             public void onPageChanged(WizardPage newPage, List<WizardPage> path) {
                 jListNavigation.setSelectedValue(newPage.getTitle(), true);
             }
+
+            @Override
+            public void onPageChanging(WizardPage arg0, List<WizardPage> arg1) {
+                // do nothing
+            }            
         });
 
         jListNavigation.setModel(new AbstractListModel<String>() {

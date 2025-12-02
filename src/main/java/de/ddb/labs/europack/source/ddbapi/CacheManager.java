@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,27 @@ public class CacheManager {
 
     public synchronized List<EuropackDoc> getErrors(String cacheId) {
         return errors.get(cacheId);
+    }
+
+    /**
+     * Remove first error entry with the given id from the error list of the cache.
+     * @param cacheId cache identifier
+     * @param id document id to remove
+     * @return true if an entry was removed, false otherwise
+     */
+    public synchronized boolean removeErrorById(String cacheId, String id) {
+        final List<EuropackDoc> list = errors.get(cacheId);
+        if (list == null || id == null) {
+            return false;
+        }
+        for (int i = 0; i < list.size(); i++) {
+            final EuropackDoc ed = list.get(i);
+            if (id.equals(ed.getId())) {
+                list.remove(i);
+                return true;
+            }
+        }
+        return false;
     }
 
     public synchronized List<String> getErrorIds(String cacheId) {

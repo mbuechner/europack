@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, 2020 Michael Büchner <m.buechner@dnb.de>.
+ * Copyright 2019, 2025 Michael Büchner <m.buechner@dnb.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,7 +212,7 @@ public class WizardPage02 extends WizardPageEuropack {
 
         jLabel2.setText("0");
 
-        jList1.setModel(new DefaultListModel());
+        jList1.setModel(new DefaultListModel<>());
         jScrollPane1.setViewportView(jList1);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -282,7 +282,7 @@ public class WizardPage02 extends WizardPageEuropack {
     }//GEN-LAST:event_jTextField1KeyPressed
 
     private void jComboBox1ItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_jComboBox1ItemStateChanged
-        final DefaultListModel listModel = (DefaultListModel) jList1.getModel();
+        final DefaultListModel<String> listModel = (DefaultListModel<String>) jList1.getModel();
         listModel.clear();
         setNextEnabled(false);
         jLabel2.setText("0");
@@ -301,7 +301,7 @@ public class WizardPage02 extends WizardPageEuropack {
         jList1.setEnabled(false);
         setPrevEnabled(false);
         setNextEnabled(false);
-        final DefaultListModel listModel = (DefaultListModel) jList1.getModel();
+        final DefaultListModel<String> listModel = (DefaultListModel<String>) jList1.getModel();
         listModel.clear();
 
         SwingUtilities.invokeLater(new Runnable() {
@@ -311,7 +311,7 @@ public class WizardPage02 extends WizardPageEuropack {
                     ddbidgetter = new DDBIdGetter(jComboBox1.getItemAt(jComboBox1.getSelectedIndex()), text);
 
                     jLabel2.setText(Integer.toString(ddbidgetter.getNumberOfResults()));
-                    final DefaultListModel listModel = (DefaultListModel) jList1.getModel();
+                    final DefaultListModel<String> listModel = (DefaultListModel<String>) jList1.getModel();
                     // delete list first
                     listModel.clear();
                     for (String s : ddbidgetter.getFirstDdbIds()) {
