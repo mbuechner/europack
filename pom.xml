@@ -9,6 +9,7 @@
     <packaging>jar</packaging>
     <name>Europack</name>
     <url>https://mbuechner.github.io/europack/</url>
+    <inceptionYear>2019</inceptionYear>
     <description>A tool for filtering specific elements out of EDM data to enable the data delivery between Deutsche Digitale Bibliothek and Europeana.</description>
     <licenses>
         <license>
@@ -221,8 +222,7 @@
                                 <initialHeapSize>2048</initialHeapSize>
                                 <maxHeapSize>4096</maxHeapSize>
                                 <path>jre</path>
-                                <bundledJre64Bit>true</bundledJre64Bit>
-                                <bundledJreAsFallback>true</bundledJreAsFallback>
+                                <requires64Bit>true</requires64Bit>
                             </jre>
                             <versionInfo>
                                 <fileVersion>1.0.0.0</fileVersion>
@@ -239,7 +239,7 @@
                             </versionInfo>
                             <messages>
                                 <startupErr>Error while starting ${project.name}.</startupErr>
-                                <bundledJreErr>Bundle error startung ${project.name}.</bundledJreErr>
+                                <jreNotFoundErr>Java (JRE) not found while starting ${project.name}.</jreNotFoundErr>
                                 <jreVersionErr>${project.name} does require Java 21 or higher. Either install it on your system or put it into the subfolder jre/. Thanks!</jreVersionErr>
                                 <launcherErr>Error running ${project.name}.</launcherErr>
                                 Used by console header only. 

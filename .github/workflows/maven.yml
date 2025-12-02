@@ -1,6 +1,11 @@
-name: Build
+name: Java CI with Maven
 
-on: [push]
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
 
 jobs:
   build:
@@ -8,10 +13,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up JDK 17
-      uses: actions/setup-java@v1
+    - uses: actions/checkout@v4
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
       with:
-        java-version: 17
+        java-version: 21
+        distribution: 'temurin'
+        cache: maven
     - name: Build with Maven
       run: mvn package --file pom.xml
+      
+    # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
+    - name: Update dependency graph
+      uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
