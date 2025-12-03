@@ -18,7 +18,6 @@ package de.ddb.labs.europack.source.ddbapi;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +43,7 @@ final class HttpMetrics {
     private static final LongAdder exSSL = new LongAdder();
     private static final LongAdder exOther = new LongAdder();
 
-    private static final ConcurrentLinkedQueue<Long> latMs = new ConcurrentLinkedQueue<>();
+    // Removed latency queue to avoid memory growth under very long runs
 
     private static volatile int intervalSec = 5;
 
@@ -109,7 +108,7 @@ final class HttpMetrics {
             exConnect.reset();
             exSSL.reset();
             exOther.reset();
-            latMs.clear();
+            // no latency buffer to clear
             domainTotalItems = 0;
             domainDownloaded = 0;
             domainDownloadErrors = 0;
@@ -149,7 +148,7 @@ final class HttpMetrics {
             s5xx.increment();
         if (code == 406)
             s406.increment();
-        latMs.offer(durMsVal);
+        // omit latency recording to stay memory-frugal
     }
 
     static void recordException(IOException ex, long durMsVal) {
@@ -162,7 +161,7 @@ final class HttpMetrics {
             exSSL.increment();
         else
             exOther.increment();
-        latMs.offer(durMsVal);
+        // omit latency recording to stay memory-frugal
     }
 
     private static void tick() {

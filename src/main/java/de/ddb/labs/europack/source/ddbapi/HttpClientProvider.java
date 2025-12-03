@@ -17,16 +17,20 @@ package de.ddb.labs.europack.source.ddbapi;
 
 import java.util.concurrent.TimeUnit;
 import okhttp3.Dispatcher;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 public final class HttpClientProvider {
 
-    private static final int MAX_REQUESTS = 64;
-    private static final int MAX_REQUESTS_PER_HOST = 16;
+    private static final int MAX_REQUESTS = 16;
+    private static final int MAX_REQUESTS_PER_HOST = 8;
     private static final int CONNECT_TIMEOUT_SEC = 2;
     private static final int WRITE_TIMEOUT_SEC = 10;
     private static final int READ_TIMEOUT_SEC = 16;
     private static final int CALL_TIMEOUT_SEC = 32;
+    private static final String userAgent = UserAgent.build("Europack", "https://github.com/mbuechner/europack",
+            "m.buechner@dnb.de");
 
     private static final OkHttpClient CLIENT;
 
@@ -35,11 +39,28 @@ public final class HttpClientProvider {
         dispatcher.setMaxRequests(MAX_REQUESTS);
         dispatcher.setMaxRequestsPerHost(MAX_REQUESTS_PER_HOST);
 
+        final Interceptor uaInterceptor = chain -> {
+            final Request original = chain.request();
+
+            if (original.header("User-Agent") != null) {
+                return chain.proceed(original);
+            }
+
+            final Request withUa = original.newBuilder()
+                    .header("User-Agent", userAgent)
+                    .build();
+
+            return chain.proceed(withUa);
+        };
+
         CLIENT = new OkHttpClient.Builder()
                 .connectTimeout(CONNECT_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .writeTimeout(WRITE_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .readTimeout(READ_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .callTimeout(CALL_TIMEOUT_SEC, TimeUnit.SECONDS)
+                .followRedirects(true)
+                .followSslRedirects(true)
+                .addInterceptor(uaInterceptor)
                 .dispatcher(dispatcher)
                 .addInterceptor(new MetricsInterceptor())
                 .build();

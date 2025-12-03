@@ -139,6 +139,8 @@
                             <addClasspath>true</addClasspath>
                             <mainClass>de.ddb.labs.europack.Main</mainClass>
                             <classpathPrefix>lib/</classpathPrefix>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                             <!--<classpathLayoutType>repository</classpathLayoutType>-->
                         </manifest>
                     </archive>

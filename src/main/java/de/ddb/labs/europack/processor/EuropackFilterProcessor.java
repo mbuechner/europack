@@ -24,8 +24,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
@@ -41,7 +44,8 @@ public class EuropackFilterProcessor {
     private static final Marker FILE_MARKER = MarkerFactory.getMarker("FILE");
     private final String cacheId;
     private final List<String> queueIds;
-    private final int MAX_THREADS = Runtime.getRuntime().availableProcessors();
+    private final int threads;
+    private final int queueCapacity;
     private static final String CACHED_POOL = "EuropackEDMProcessor";
     private final ExecutorService exe;
     private final List<String> filter;
@@ -52,9 +56,18 @@ public class EuropackFilterProcessor {
     
     public EuropackFilterProcessor(String cacheId, List<String> filter, List<SinkInterface> sinks) {
         this.queueIds = new ArrayList<>();
-        // this.exe = Executors.newCachedThreadPool(new AppThreadFactory(CACHED_POOL));
-        this.exe = Executors.newFixedThreadPool(MAX_THREADS, new AppThreadFactory(CACHED_POOL));
-        LOG.info("Number of parallel processes set to '{}' (Number of processors)", MAX_THREADS);
+        this.threads = Integer.getInteger("europack.processor.threads", Runtime.getRuntime().availableProcessors());
+        this.queueCapacity = Integer.getInteger("europack.processor.queueSize", Math.max(threads * 2, 64));
+        final BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(queueCapacity);
+        this.exe = new ThreadPoolExecutor(
+            threads,
+            threads,
+            30L,
+            TimeUnit.SECONDS,
+            workQueue,
+            new AppThreadFactory(CACHED_POOL),
+            new ThreadPoolExecutor.CallerRunsPolicy());
+        LOG.info("Processor threads='{}', queueCapacity='{}'", threads, queueCapacity);
         this.cacheId = cacheId;
         this.filter = filter;
         this.addedJobs = 0;
@@ -100,7 +113,16 @@ public class EuropackFilterProcessor {
         for (SinkInterface sink : sinks) {
             sink.dispose();
         }
-        exe.shutdownNow();
+        exe.shutdown();
+        try {
+            if (!exe.awaitTermination(10, TimeUnit.SECONDS)) {
+                LOG.warn("Processor did not terminate in time; forcing shutdownNow()");
+                exe.shutdownNow();
+            }
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            exe.shutdownNow();
+        }
     }
     
     public synchronized boolean isDone() {
