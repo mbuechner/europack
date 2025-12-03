@@ -45,7 +45,7 @@ final class HttpMetrics {
 
     // Removed latency queue to avoid memory growth under very long runs
 
-    private static volatile int intervalSec = 5;
+    private static volatile int intervalSec = 30;
 
     private static ScheduledExecutorService scheduler;
     // Domain (EDM pipeline) snapshot counters
@@ -55,11 +55,18 @@ final class HttpMetrics {
     private static volatile int domainProcessErrors = 0;
     private static volatile int domainProcessed = 0;
 
+    // Logging reduction helpers
+    private static final int LOG_DELTA_THRESHOLD = 1000; // log only if change >= 1000
+    private static final int LOG_EVERY_N_TICKS = 10;    // or every 10th tick as a heartbeat
+    private static int lastProcessed = 0;
+    private static int lastRunning = 0;
+    private static int lastQueued = 0;
+    private static int tickCounter = 0;
+
     private HttpMetrics() {
     }
 
     static void init() {
-        intervalSec = parseInt(System.getProperty("europack.metrics.intervalSec"), 5);
         if (scheduler != null)
             return;
         // Use a daemon scheduler thread so it won't block JVM shutdown
@@ -114,6 +121,10 @@ final class HttpMetrics {
             domainDownloadErrors = 0;
             domainProcessErrors = 0;
             domainProcessed = 0;
+            lastProcessed = 0;
+            lastRunning = 0;
+            lastQueued = 0;
+            tickCounter = 0;
         } catch (Throwable ignored) {
         }
     }
@@ -166,6 +177,7 @@ final class HttpMetrics {
 
     private static void tick() {
         try {
+            tickCounter++;
             // Cumulative totals since start
             final long t = total.sum();
             final long c2 = s2xx.sum();
@@ -185,7 +197,16 @@ final class HttpMetrics {
             final int running = d.runningCallsCount();
             final int queued = d.queuedCallsCount();
 
-            if (domainTotalItems > 0 || t > 0 || running > 0 || queued > 0) {
+                // Decide if we should log this tick
+                boolean heartbeat = (tickCounter % LOG_EVERY_N_TICKS) == 0;
+                int deltaProcessed = Math.abs(domainProcessed - lastProcessed);
+                int deltaRunning = Math.abs(running - lastRunning);
+                int deltaQueued = Math.abs(queued - lastQueued);
+                boolean significantChange = (deltaProcessed >= LOG_DELTA_THRESHOLD)
+                    || (deltaRunning >= LOG_DELTA_THRESHOLD)
+                    || (deltaQueued >= LOG_DELTA_THRESHOLD);
+
+                if ((domainTotalItems > 0 || t > 0 || running > 0 || queued > 0) && (heartbeat || significantChange)) {
                 // Show HTTP code counts as percentage of total ITEMS (requested behavior)
                 final double h2pct = pct(c2, domainTotalItems);
                 final double h4pct = pct(c4, domainTotalItems);
@@ -210,6 +231,11 @@ final class HttpMetrics {
                         t, running, queued,
                         c2, fmt(h2pct), c4, fmt(h4pct), c406, c5, fmt(h5pct),
                         xt, xc, xs, xo);
+
+                // Update last snapshots after logging
+                lastProcessed = domainProcessed;
+                lastRunning = running;
+                lastQueued = queued;
             }
         } catch (Throwable e) {
             LOG.warn("metrics tick failed: {}", e.toString());

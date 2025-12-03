@@ -19,18 +19,23 @@ import java.io.IOException;
 import okhttp3.Interceptor;
 import okhttp3.Response;
 
-class MetricsInterceptor implements Interceptor {
+final class MetricsInterceptor implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException {
-        long t0 = System.nanoTime();
+        final long t0 = System.nanoTime();
         try {
             final Response r = chain.proceed(chain.request());
-            long durMs = (System.nanoTime() - t0) / 1_000_000L;
+            final long durMs = Math.max(0L, (System.nanoTime() - t0) / 1_000_000L);
             HttpMetrics.recordStatus(r.code(), durMs);
             return r;
         } catch (IOException ex) {
-            final long durMs = (System.nanoTime() - t0) / 1_000_000L;
+            final long durMs = Math.max(0L, (System.nanoTime() - t0) / 1_000_000L);
             HttpMetrics.recordException(ex, durMs);
+            throw ex;
+        } catch (RuntimeException ex) {
+            final long durMs = Math.max(0L, (System.nanoTime() - t0) / 1_000_000L);
+            // Treat unexpected runtime exceptions as "other" for metrics
+            HttpMetrics.recordException(new IOException(ex.getMessage(), ex), durMs);
             throw ex;
         }
     }
