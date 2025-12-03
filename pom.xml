@@ -213,6 +213,8 @@
                             <jar>target/${project.artifactId}.jar</jar>
                             <!--if <dontWrapJar>true</dontWrapJar> change to this conf <jar>${project.artifactId}-${project.version}.jar</jar>--> 
                             <dontWrapJar>false</dontWrapJar>
+                            <priority>high</priority>
+                            <cmdLine>-XX:+UseG1GC -XX:MaxGCPauseMillis=200</cmdLine>
                             <errTitle>Error in launch4j plugin</errTitle>
                             <classPath>
                                 <mainClass>de.ddb.labs.europack.Main</mainClass>
@@ -226,8 +228,6 @@
                                 <maxHeapSize>4096</maxHeapSize>
                                 <path>jre</path>
                                 <requires64Bit>true</requires64Bit>
-                                <opt>-XX:+UseG1GC</opt>
-                                <opt>-XX:MaxGCPauseMillis=200</opt>
                             </jre>
                             <versionInfo>
                                 <fileVersion>1.0.0.0</fileVersion>
