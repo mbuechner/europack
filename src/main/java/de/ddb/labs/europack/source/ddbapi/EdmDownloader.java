@@ -81,6 +81,14 @@ public class EdmDownloader {
         }
     }
 
+    /**
+     * Current processor backlog (added - processed).
+     * Used by producers (e.g., DDBIdGetter) to throttle submissions.
+     */
+    public synchronized int getBacklog() {
+        return epfp.getAddedJobs() - epfp.getProcessedJobs();
+    }
+
     public void reset() {
         this.itemsDowloaded = 0;
         this.itemsToDownload = Integer.MAX_VALUE;

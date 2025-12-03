@@ -219,12 +219,15 @@
                             </classPath>
                             <icon>src/main/resources/icon.ico</icon>
                             <jre>
+                                <requiresJdk>false</requiresJdk>
                                 <minVersion>21</minVersion>
                                 <!--<maxVersion>1.8.0</maxVersion>-->
                                 <initialHeapSize>2048</initialHeapSize>
                                 <maxHeapSize>4096</maxHeapSize>
                                 <path>jre</path>
                                 <requires64Bit>true</requires64Bit>
+                                <opt>-XX:+UseG1GC</opt>
+                                <opt>-XX:MaxGCPauseMillis=200</opt>
                             </jre>
                             <versionInfo>
                                 <fileVersion>1.0.0.0</fileVersion>

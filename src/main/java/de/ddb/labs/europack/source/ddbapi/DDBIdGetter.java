@@ -49,6 +49,9 @@ public class DDBIdGetter {
     private final static Logger LOG = LoggerFactory.getLogger(DDBIdGetter.class);
     private static final Marker FILE_MARKER = MarkerFactory.getMarker("FILE");
     private final static int ENTITYCOUNT = 1000; // count of entities per query
+    // Throttle at the source to prevent downloader/OkHttp queue explosion
+    // when filters are off or processor is saturated.
+    final int backlogLimit = 512; // conservative fixed limit
     private final String api;
     private final String apiKey;
     private final ObjectMapper m;
@@ -66,7 +69,9 @@ public class DDBIdGetter {
 
         {
             final Properties properties = new Properties();
-            try (final BufferedReader is = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream(".properties"), Charset.forName("UTF-8")))) {
+            try (final BufferedReader is = new BufferedReader(new InputStreamReader(
+                    Thread.currentThread().getContextClassLoader().getResourceAsStream(".properties"),
+                    Charset.forName("UTF-8")))) {
                 properties.load(is);
                 final String pv = properties.getProperty("europack.testdata", "");
                 final String[] pva = pv.split("\\|");
@@ -81,7 +86,8 @@ public class DDBIdGetter {
         this(api, query, null, "");
     }
 
-    public DDBIdGetter(String api, String query, EdmDownloader downloader, String edmProfile) throws InterruptedException, IOException {
+    public DDBIdGetter(String api, String query, EdmDownloader downloader, String edmProfile)
+            throws InterruptedException, IOException {
         this.errors = 0;
         this.m = new ObjectMapper();
         this.downloader = downloader;
@@ -135,6 +141,13 @@ public class DDBIdGetter {
             for (String ddbId : list) {
                 if (isCanceled()) {
                     break;
+                }
+                try {
+                    while (!isCanceled() && downloader.getBacklog() > backlogLimit) {
+                        Thread.sleep(50);
+                    }
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
                 }
                 Request request;
 
@@ -231,7 +244,8 @@ public class DDBIdGetter {
                     }
                 }
             } else {
-                throw new ConnectException("Response for " + response.request().url().toString() + " is " + response.code() + " (" + response.message() + ")");
+                throw new ConnectException("Response for " + response.request().url().toString() + " is "
+                        + response.code() + " (" + response.message() + ")");
             }
         }
         return numberOfResults;
@@ -246,7 +260,7 @@ public class DDBIdGetter {
 
     /**
      *
-     * @param list List to add DDB URIs to.
+     * @param list       List to add DDB URIs to.
      * @param cursorMark Current cursor mark
      * @return Next cursor marl
      */
