@@ -98,16 +98,9 @@ public class EdmDownloader {
     }
 
     public void dispose() {
+        // Cancel outstanding calls but do not shut down the shared OkHttp client
+        // (HttpClientProvider manages lifecycle on JVM shutdown).
         client.dispatcher().cancelAll();
-        client.dispatcher().executorService().shutdownNow();
-        client.connectionPool().evictAll();
-        try {
-            if (client.cache() != null) {
-                client.cache().close();
-            }
-        } catch (IOException ex) {
-            // nothing
-        }
     }
 
     class MyCallback implements Callback {
@@ -124,7 +117,7 @@ public class EdmDownloader {
                 return;
             }
             LOG.error(FILE_MARKER, "{}: {}", id, e.getLocalizedMessage(), e);
-            CacheManager.getInstance().addError(cacheId, new EuropackDoc(id));
+            CacheManager.getInstance().addError(cacheId, id);
             incErrors();
             finishing();
         }
@@ -134,23 +127,28 @@ public class EdmDownloader {
             if (isCanceled()) {
                 return;
             }
-            try (ResponseBody responseBody = response.body()) {
+            try {
+                final ResponseBody rb = response.body();
                 if (!response.isSuccessful()) {
                     throw new ConnectException(response.toString());
-                } else {
-
-                // debugging
-                // if (new Random().nextInt(100) < 1) {
-                //    throw new ConnectException("Statistical error for debugging thrown. " + response.toString());
-                // }
+                }
+                if (rb == null) {
+                    throw new ConnectException("Empty response body: " + response);
+                }
+                try (ResponseBody responseBody = rb) {
+                    // debugging
+                    // if (new Random().nextInt(100) < 1) {
+                    // throw new ConnectException("Statistical error for debugging thrown. " +
+                    // response.toString());
+                    // }
                     final EuropackDoc ed = new EuropackDoc(id, responseBody.byteStream());
                     CacheManager.getInstance().put(cacheId, ed);
                     epfp.addJob(id);
                 }
 
-            } catch (ConnectException | IllegalArgumentException | SAXException | ParserConfigurationException | NullPointerException ex) {
+            } catch (ConnectException | IllegalArgumentException | SAXException | ParserConfigurationException ex) {
                 LOG.error(FILE_MARKER, "{}: {}", id, ex.getMessage());
-                CacheManager.getInstance().addError(cacheId, new EuropackDoc(id));
+                CacheManager.getInstance().addError(cacheId, id);
                 incErrors();
             } finally {
                 finishing();
@@ -161,7 +159,8 @@ public class EdmDownloader {
             final int getItemsDowloaded = incItemsDowloaded();
             final int getItemsToDownload = getItemsToDownload();
             if (getItemsDowloaded % 1000 == 0 || getItemsDowloaded >= getItemsToDownload) {
-                LOG.info(FILE_MARKER, "{} of {} downloaded", getItemsDowloaded, (getItemsToDownload == Integer.MAX_VALUE ? "?" : getItemsToDownload));
+                LOG.info(FILE_MARKER, "{} of {} downloaded", getItemsDowloaded,
+                        (getItemsToDownload == Integer.MAX_VALUE ? "?" : getItemsToDownload));
             }
             if (getItemsDowloaded >= getItemsToDownload) {
                 setDone(true);
@@ -194,7 +193,7 @@ public class EdmDownloader {
     }
 
     /**
-     * @return 
+     * @return
      */
     public synchronized int incItemsDowloaded() {
         return ++itemsDowloaded;
@@ -253,6 +252,3 @@ public class EdmDownloader {
         }
     }
 }
-
-
-

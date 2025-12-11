@@ -31,6 +31,7 @@ import org.ehcache.Status;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,13 +43,18 @@ import org.slf4j.LoggerFactory;
 public class CacheManager {
 
     private final static Logger LOG = LoggerFactory.getLogger(CacheManager.class);
-    private final static CacheConfigurationBuilder<String, EuropackDoc> CCB = CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, EuropackDoc.class,
-            ResourcePoolsBuilder.newResourcePoolsBuilder()
-                    .heap(2048, MemoryUnit.MB)
-                    .disk(10, MemoryUnit.GB, false));
+    // Keep a small, entry-based on-heap store to minimize GC pressure,
+    // move bulk data off-heap and to disk for large runs.
+    private final static CacheConfigurationBuilder<String, EuropackDoc> CCB = CacheConfigurationBuilder
+            .newCacheConfigurationBuilder(String.class, EuropackDoc.class,
+                    ResourcePoolsBuilder.newResourcePoolsBuilder()
+                            .heap(1000, EntryUnit.ENTRIES) // only a small number of hot entries on-heap
+                            .offheap(512, MemoryUnit.MB) // bulk in off-heap to reduce GC impact
+                            .disk(10, MemoryUnit.GB, false)); // persistent disk tier
     private final org.ehcache.CacheManager CM;
     private final Path tmpPath;
-    private final Map<String, List<EuropackDoc>> errors;
+    // Track only IDs for errors to avoid retaining full documents in memory
+    private final Map<String, List<String>> errors;
 
     private static final class InstanceHolder {
 
@@ -115,41 +121,45 @@ public class CacheManager {
         errors.remove(cacheId);
     }
 
-    public synchronized void addError(String cacheId, EuropackDoc ed) {
-        errors.get(cacheId).add(ed);
+    public synchronized void addError(String cacheId, String id) {
+        if (id != null && !id.isBlank()) {
+            errors.get(cacheId).add(id);
+        }
     }
 
     public synchronized List<EuropackDoc> getErrors(String cacheId) {
-        return errors.get(cacheId);
+        // Build lightweight wrappers on demand to preserve API without retaining docs
+        final List<EuropackDoc> out = new ArrayList<>();
+        final List<String> ids = errors.get(cacheId);
+        if (ids != null) {
+            for (String id : ids) {
+                out.add(new EuropackDoc(id));
+            }
+        }
+        return out;
     }
 
     /**
      * Remove first error entry with the given id from the error list of the cache.
+     * 
      * @param cacheId cache identifier
-     * @param id document id to remove
+     * @param id      document id to remove
      * @return true if an entry was removed, false otherwise
      */
     public synchronized boolean removeErrorById(String cacheId, String id) {
-        final List<EuropackDoc> list = errors.get(cacheId);
+        final List<String> list = errors.get(cacheId);
         if (list == null || id == null) {
             return false;
         }
-        for (int i = 0; i < list.size(); i++) {
-            final EuropackDoc ed = list.get(i);
-            if (id.equals(ed.getId())) {
-                list.remove(i);
-                return true;
-            }
-        }
+        final boolean removed = list.remove(id);
+        if (removed)
+            return true;
         return false;
     }
 
     public synchronized List<String> getErrorIds(String cacheId) {
-        final List<String> list = new ArrayList<>();
-        for (EuropackDoc e : errors.get(cacheId)) {
-            list.add(e.getId());
-        }
-        return list;
+        final List<String> ids = errors.get(cacheId);
+        return (ids == null) ? new ArrayList<>() : new ArrayList<>(ids);
     }
 
     public synchronized void destroy() {
@@ -167,5 +177,17 @@ public class CacheManager {
         final Cache<String, EuropackDoc> cacheLocal = CM.getCache(cacheId, String.class, EuropackDoc.class);
         cacheLocal.put(element.getId(), element);
     }
-}
 
+    /**
+     * Remove a single document from the cache to free memory after processing.
+     */
+    public synchronized void remove(String cacheId, String id) {
+        final Cache<String, EuropackDoc> cacheLocal = CM.getCache(cacheId, String.class, EuropackDoc.class);
+        if (cacheLocal != null && id != null) {
+            try {
+                cacheLocal.remove(id);
+            } catch (Exception ignore) {
+            }
+        }
+    }
+}

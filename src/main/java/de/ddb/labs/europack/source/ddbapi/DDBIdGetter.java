@@ -51,7 +51,7 @@ public class DDBIdGetter {
     private final static int ENTITYCOUNT = 1000; // count of entities per query
     // Throttle at the source to prevent downloader/OkHttp queue explosion
     // when filters are off or processor is saturated.
-    final int backlogLimit = 512; // conservative fixed limit
+    final int backlogLimit = 1024; // conservative fixed limit
     private final String api;
     private final String apiKey;
     private final ObjectMapper m;
@@ -180,6 +180,16 @@ public class DDBIdGetter {
 
     public void addAdditionalJobs(List<String> ddbIds, boolean removeFromErrors) {
         for (String ddbId : ddbIds) {
+            if (isCanceled()) {
+                break;
+            }
+            try {
+                while (!isCanceled() && downloader.getBacklog() > backlogLimit) {
+                    Thread.sleep(50);
+                }
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
             Request request;
             if (getEdmProfile().isBlank()) {
                 request = new Request.Builder()

@@ -277,18 +277,6 @@ final class HttpMetrics {
         }
     }
 
-    // Latency helper methods removed to reduce confusion; focusing on cumulative
-    // counts only.
-    private static int parseInt(String s, int def) {
-        if (s == null || s.isBlank())
-            return def;
-        try {
-            return Integer.parseInt(s.trim());
-        } catch (NumberFormatException e) {
-            return def;
-        }
-    }
-
     private static double pct(long part, long total) {
         if (total <= 0)
             return 0.0;
