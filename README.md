@@ -1,4 +1,4 @@
-![](https://github.com/mbuechner/europack/workflows/Build/badge.svg)
+![](https://github.com/mbuechner/europack/actions/workflows/maven.yml/badge.svg)
 # Europack
 Europack is a functional interface which allows anyone to select datasets from [Deutsche Digitale Bibliothek](https://www.deutsche-digitale-bibliothek.de/) according to set criteria and generate a valid external EDM data export.
 
