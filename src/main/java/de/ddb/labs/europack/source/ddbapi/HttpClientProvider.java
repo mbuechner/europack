@@ -16,6 +16,7 @@
 package de.ddb.labs.europack.source.ddbapi;
 
 import java.util.concurrent.TimeUnit;
+import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -23,7 +24,9 @@ import okhttp3.Request;
 
 public final class HttpClientProvider {
 
-    private static final int MAX_REQUESTS = 16;
+    // Conservative concurrency to prevent ephemeral port exhaustion on Windows
+    // Allow 8 parallel connections while relying on connection reuse
+    private static final int MAX_REQUESTS = 8;
     private static final int MAX_REQUESTS_PER_HOST = 8;
     private static final int CONNECT_TIMEOUT_SEC = 2;
     private static final int WRITE_TIMEOUT_SEC = 10;
@@ -62,6 +65,7 @@ public final class HttpClientProvider {
                 .followSslRedirects(true)
                 .addInterceptor(uaInterceptor)
                 .dispatcher(dispatcher)
+                .connectionPool(new ConnectionPool(10, 10, TimeUnit.MINUTES))
                 .addInterceptor(new MetricsInterceptor())
                 .build();
 
