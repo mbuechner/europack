@@ -65,7 +65,7 @@ public final class HttpClientProvider {
                 .followSslRedirects(true)
                 .addInterceptor(uaInterceptor)
                 .dispatcher(dispatcher)
-                .connectionPool(new ConnectionPool(10, 10, TimeUnit.MINUTES))
+                .connectionPool(new ConnectionPool(32, 10, TimeUnit.MINUTES))
                 .addInterceptor(new MetricsInterceptor())
                 .build();
 

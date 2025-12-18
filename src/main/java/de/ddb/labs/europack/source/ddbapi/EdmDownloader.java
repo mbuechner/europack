@@ -19,6 +19,11 @@ import de.ddb.labs.europack.processor.EuropackFilterProcessor;
 import de.ddb.labs.europack.processor.EuropackDoc;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.SocketException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.ParserConfigurationException;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -46,6 +51,17 @@ public class EdmDownloader {
     private int itemsToDownload, itemsDowloaded;
     private boolean done, canceled;
     private int errors;
+    private static final ScheduledExecutorService RETRY_EXEC = Executors
+            .newSingleThreadScheduledExecutor(new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread t = new Thread(r, "europack-retry");
+                    t.setDaemon(true);
+                    return t;
+                }
+            });
+    private static final int MAX_RETRIES = 2;
+    private static final long BASE_BACKOFF_MS = 400L;
 
     public EdmDownloader(String cacheId, EuropackFilterProcessor epfp) throws InterruptedException, IOException {
         client = HttpClientProvider.getClient();
@@ -64,7 +80,7 @@ public class EdmDownloader {
             return;
         }
         try {
-            client.newCall(request).enqueue(new MyCallback(ddbId));
+            client.newCall(request).enqueue(new MyCallback(ddbId, request, 0));
         } catch (Exception e) {
             LOG.error(FILE_MARKER, "{}", e.getMessage(), e);
         }
@@ -106,9 +122,13 @@ public class EdmDownloader {
     class MyCallback implements Callback {
 
         private final String id;
+        private final Request request;
+        private final int attempt;
 
-        public MyCallback(String id) {
+        public MyCallback(String id, Request request, int attempt) {
             this.id = id;
+            this.request = request;
+            this.attempt = attempt;
         }
 
         @Override
@@ -116,7 +136,34 @@ public class EdmDownloader {
             if (isCanceled()) {
                 return;
             }
-            LOG.error(FILE_MARKER, "{}: {}", id, e.getLocalizedMessage(), e);
+            final String msg = e.getMessage() == null ? "" : e.getMessage();
+            final boolean maybeSocketPressure = e instanceof SocketException
+                    || (e instanceof ConnectException)
+                    || msg.contains("No buffer space available")
+                    || msg.contains("Address already in use")
+                    || msg.contains("connect")
+                    || msg.contains("timed out");
+
+            if (maybeSocketPressure && attempt < MAX_RETRIES) {
+                final long delay = (long) (BASE_BACKOFF_MS * Math.pow(2, attempt));
+                LOG.warn(FILE_MARKER, "{}: {} (attempt {}/{}) — retrying in {} ms", id, msg, attempt + 1, MAX_RETRIES,
+                        delay);
+                RETRY_EXEC.schedule(() -> {
+                    if (!isCanceled()) {
+                        try {
+                            client.newCall(request).enqueue(new MyCallback(id, request, attempt + 1));
+                        } catch (Exception ex) {
+                            LOG.error(FILE_MARKER, "{}: {}", id, ex.getLocalizedMessage(), ex);
+                            CacheManager.getInstance().addError(cacheId, id);
+                            incErrors();
+                            finishing();
+                        }
+                    }
+                }, delay, TimeUnit.MILLISECONDS);
+                return;
+            }
+
+            LOG.error(FILE_MARKER, "{}: {}", id, msg, e);
             CacheManager.getInstance().addError(cacheId, id);
             incErrors();
             finishing();
